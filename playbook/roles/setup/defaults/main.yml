@@ -1,0 +1,29 @@
+---
+
+OPNCC_PATH_BASE:
+  config: '/etc/opn-cc'
+  lib: '/var/local/lib/opn-cc'
+
+OPNCC_USER: 'opn-cc'
+
+OPNCC:
+  users:
+    opn-cc: 1100  # OPNCC_USER
+    gitea: 1101
+  port:
+    gitea:
+      web: 8001
+      ssh: 2201
+    graylog:
+      web: 8002
+      log: 514
+  path:
+    data:
+      gitea: "{{ OPNCC_PATH_BASE.lib }}/vcs"
+    config:
+      compose: "{{ OPNCC_PATH_BASE.config }}/docker-compose"
+      gitea: "{{ OPNCC_PATH_BASE.config }}/gitea"
+    bin:
+      compose: '/usr/local/bin/docker-compose'
+  network:
+    gitea: '192.168.69.0/29'

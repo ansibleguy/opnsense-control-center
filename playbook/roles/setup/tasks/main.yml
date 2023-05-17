@@ -1,0 +1,28 @@
+---
+
+- name: OPN-CC | Adding service-users
+  ansible.builtin.user:
+    name: "{{ item.key }}"
+    comment: 'OPN-CC Service-User'
+    uid: "{{ item.value }}"
+  with_dict: "{{ OPNCC.users }}"
+
+- name: OPN-CC | Docker & Network settings
+  ansible.builtin.import_tasks: network_docker.yml
+
+- name: OPN-CC | Creating directories
+  ansible.builtin.file:
+    path: "{{ item.p }}"
+    state: directory
+    mode: 0750
+    owner: "{{ item.o }}"
+    group: "{{ item.g | default(item.o) }}"
+  with_items:
+    - {p: "{{ OPNCC_PATH_BASE.config }}", o: "{{ OPNCC_USER }}"}
+    - {p: "{{ OPNCC_PATH_BASE.lib }}", o: "{{ OPNCC_USER }}"}
+    - {p: "{{ OPNCC.path.config.compose }}", o: "{{ OPNCC_USER }}"}
+    - {p: "{{ OPNCC.path.data.gitea }}", o: "{{ OPNCC.users.gitea }}"}
+    - {p: "{{ OPNCC.path.config.gitea }}", o: "{{ OPNCC.users.gitea }}"}
+
+- name: OPN-CC | Processing services
+  ansible.builtin.import_tasks: services.yml

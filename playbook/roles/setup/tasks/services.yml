@@ -1,0 +1,40 @@
+---
+
+- name: OPN-CC | App configs
+  ansible.builtin.template:
+    src: "templates/etc/opn-cc/{{ item.f }}.j2"
+    dest: "{{ OPNCC_PATH_BASE.config }}/{{ item.f }}"
+    mode: 0640
+    owner: "{{ item.o }}"
+    group: "{{ item.g | default(item.o) }}"
+  loop:
+    - {f: 'gitea/app.ini', o: "{{ OPNCC.users.gitea }}"}
+
+- name: OPN-CC | Docker-compose configs
+  ansible.builtin.template:
+    src: "templates/etc/opn-cc/docker-compose/{{ item }}.yml.j2"
+    dest: "{{ OPNCC.path.config.compose }}/{{ item }}.yml"
+    mode: 0640
+    owner: 'root'
+    group: "{{ OPNCC_USER }}"
+  loop:
+    - 'gitea'
+
+- name: OPN-CC | Docker-compose services
+  ansible.builtin.template:
+    src: "templates/etc/systemd/system/{{ item }}.service.j2"
+    dest: "/etc/systemd/system/{{ item }}.service"
+    mode: 0644
+    owner: 'root'
+    group: 'root'
+  loop:
+    - 'opn-cc-vcs'  # gitea
+
+- name: OPN-CC | Enabling services
+  ansible.builtin.systemd:
+    name: "{{ item }}.service"
+    enabled: true
+    daemon_reload: true
+  loop:
+    - 'opn-cc-vcs'  # gitea
+

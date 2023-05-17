@@ -1,16 +1,30 @@
 # OPNSense Control Center
 
-Solution to centrally manage OPNSense firewalls.
+Solution to centrally manage [OPNSense firewalls](https://github.com/opnsense).
 
 The idea is to create a hub that communicates to multiple firewalls and let you manage them using their Rest-HTTP-APIs.
 
 The API interaction will mainly be done using [Ansible](https://www.ansible.com).
 
+Status updates may be fetched using plain Python3.
+
+## Development
+
+Feel free to..
+
+* [start a discussion](https://github.com/ansibleguy/opnsense-control-center/discussions)
+* [file issues](https://github.com/ansibleguy/opnsense-control-center/issues)
+* [contribute by creating pull-requests](https://github.com/ansibleguy/opnsense-control-center/pulls)
+
+### DEVELOPMENT IN PROGRESS!
+
+Not yet in a usable state!
+
 ## Main parts
 
 * [OPNSense Ansible Collection](https://github.com/ansibleguy/collection_opnsense)
 
-* [Semaphore Ansible WebUI](https://github.com/ansibleguy/sw_semaphore)
+* [Semaphore Ansible WebUI](https://github.com/ansible-semaphore/semaphore)
 
 * [Graylog for centralized logging incl. analysis and alerting](https://github.com/Graylog2/graylog2-server)
 

@@ -1,0 +1,164 @@
+---
+
+- hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+  module_defaults:
+    ansible.builtin.setup:
+      gather_subset: ['!all', 'os_family']
+
+  vars:
+    OPNCC_MANAGE:
+      nftables: true
+
+    OPNCC_VARS:
+      # domain:
+      port:
+        http: 80
+        https: 443
+        ssh: 22
+        firewalls: [443, 22]  # ports that are in use for firewall http+s
+      networks:
+        # todo: check any src works if unset/empty
+        allow_web: ['192.168.0.0/16', '172.16.0.0/12', '10.0.0.0/8']
+        allow_ssh: ['192.168.0.0/16', '172.16.0.0/12', '10.0.0.0/8']
+        deny: []
+        docker: '192.168.69.0/24'
+
+  pre_tasks:
+    # - name: Pre-Check | Domain is set and valid
+    #   ansible.builtin.assert:
+    #     that:
+    #       - OPNCC_VARS.domain | default(none, true) is not none
+    #       - OPNCC_VARS.domain | valid_hostname
+
+    - name: Pre-Check | Comparing active SSH port with configured one
+      ansible.builtin.shell: 'lsof -i -P -n | grep LISTEN | grep ssh'
+      register: pc_ssh
+      failed_when: >
+        pc_ssh.failed or
+        ':' + OPNCC_VARS.port.ssh | string not in pc_ssh.stdout
+      changed_when: false
+      when: OPNCC_MANAGE.nftables | bool
+
+  roles:
+    - name: ansibleguy.infra_nftables
+      when: OPNCC_MANAGE.nftables | bool
+      tags: [nftables, setup]
+      vars:
+        nftables:
+          enable:
+            sets: false
+
+          tables:
+            default:
+              vars:
+                private_ranges: ['192.168.0.0/16', '172.16.0.0/12', '10.0.0.0/8']
+
+              limits:
+                icmp_limit:
+                  rate: '20/second'
+
+              chains:
+                input:
+                  hook: 'input'
+                  policy: 'drop'
+                  rules:
+                    # basic security
+                    - {raw: "{% if OPNCC_VARS.networks.deny | default(none, true) is not none %}\
+                    ip saddr {{ OPNCC_VARS.networks.deny | nftables_format_list }} log prefix \"NFTables DROP DENY-NWs \" drop\
+                    {% endif %}"}
+                    - {raw: 'ct state invalid log prefix "NFTables DROP invalid states" drop'}
+
+                    # basic traffic
+                    - {raw: 'ct state {established, related} accept comment "Allow open sessions"'}
+                    - {if: 'lo', comment: 'Allow loopback traffic'}
+                    - {proto: 'icmp', type: 'echo-request', limit: 'icmp_limit', comment: 'Allow ICMP-Ping'}
+                    - {proto: 'icmp', code: 30, limit: 'icmp_limit', comment: 'Allow ICMP-Traceroute'}
+
+                    # log + allow ssh-access
+                    - {raw: "ct state new tcp dport {{ OPNCC_VARS.port.ssh }}\
+                    {% if OPNCC_VARS.networks.allow_ssh | default(none, true) is not none %}\
+                     ip saddr {{ OPNCC_VARS.networks.allow_ssh | nftables_format_list }}
+                    {% endif %}
+                    log prefix \"NFTables WEB \""}
+                    - {raw: "ct state new tcp dport {{ OPNCC_VARS.port.ssh }} log prefix \"NFTables SSH \""}
+                    - {proto: 'tcp', port: "{{ OPNCC_VARS.port.ssh }}", src: "{{ OPNCC_VARS.networks.allow_ssh | default(omit) }}"}
+
+                    # log + allow web-access
+                    - {raw: "ct state new tcp dport { {{ OPNCC_VARS.port.http }}, {{ OPNCC_VARS.port.https }} }\
+                    {% if OPNCC_VARS.networks.allow_web | default(none, true) is not none %}\
+                     ip saddr {{ OPNCC_VARS.networks.allow_web | nftables_format_list }}
+                    {% endif %}
+                    log prefix \"NFTables WEB \""}
+                    - {proto: 'tcp', port: ["{{ OPNCC_VARS.port.http }}", "{{ OPNCC_VARS.port.https }}"], src: "{{ OPNCC_VARS.networks.allow_web | default(omit) }}"}
+
+                forward:
+                  hook: 'forward'
+                  policy: 'drop'
+                  # todo: wireguard network(s)
+                  rules:
+                    # access between containers
+                    - {if: 'br-*', of: 'br-*'}
+
+                output:
+                  hook: 'output'
+                  policy: 'drop'
+                  rules:
+                    # basic traffic
+                    - {raw: 'ct state {established, related} accept comment "Allow open sessions"'}
+                    - {of: 'lo', comment: 'Allow loopback traffic'}
+                    - {proto: 'icmp', comment: 'Allow ICMP'}
+
+                    # access to containers
+                    - {of: 'br-*'}
+
+                    # firewall management
+                    - {raw: "ct state new tcp dport {{ OPNCC_VARS.port.firewalls | nftables_format_list }} log prefix \"NFTables OUT Firewalls \"" }
+                    - {proto: 'tcp', port: "{{ OPNCC_VARS.port.firewalls }}"}
+
+                    # system connections
+                    #   NOTE: could be further restricted; but we might expect to be behind a network firewall
+                    - {raw: "ct state new tcp dport { 80, 443, 123, 53, 853 } ip daddr != $private_ranges log prefix \"NFTables OUT PUBLIC \"" }
+                    - {proto: 'tcp', port: [80, 443], dest: '!= $private_ranges', comment: 'HTTP+S for Updates'}
+                    - {proto: ['tcp', 'udp'], port: 123, comment: 'NTP'}
+                    - {proto: 'tcp', port: [53, 853], comment: 'DNS'}
+                    - {proto: 'udp', port: 53, comment: 'DNS'}
+
+                nat:
+                  hook: 'postrouting'
+                  priority: -100
+                  type: 'nat'
+                  policy: 'accept'
+                  rules:
+                    # todo: add nat rule for client-mgmt-network to wireguard-network
+                    - {src: '$private_ranges', dest: '!= $private_ranges', masquerade: true}
+                    - {src: "{{ OPNCC_VARS.networks.docker }}", dest: "{{ OPNCC_VARS.networks.docker }}", masquerade: true}
+
+    - name: ansibleguy.infra_docker_minimal
+      vars:
+        docker:
+          compose:
+            enable: true
+            version: '2.18.0'
+          nftables:
+            bridge_none: true
+            disable_iptables: true
+            reload: true
+      tags: [docker, setup]
+
+    # NOTE: config just for testing purposes for now
+    - name: ansibleguy.infra_nginx
+      vars:
+        nginx:
+          sites:
+            opncc:
+              domain: 'vcs.opncc'
+              aliases: ['vcs.opncc.localhost']
+              mode: 'proxy'
+              proxy:
+                port: 8001
+      tags: [nginx, setup]
+
+    - setup
