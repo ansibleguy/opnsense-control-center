@@ -14,15 +14,26 @@
   ansible.builtin.file:
     path: "{{ item.p }}"
     state: directory
-    mode: 0750
+    mode: "{{ item.m | default('0750') }}"
     owner: "{{ item.o }}"
     group: "{{ item.g | default(item.o) }}"
+    # recurse: true
   with_items:
-    - {p: "{{ OPNCC_PATH_BASE.config }}", o: "{{ OPNCC_USER }}"}
-    - {p: "{{ OPNCC_PATH_BASE.lib }}", o: "{{ OPNCC_USER }}"}
+    # base
+    - {p: "{{ OPNCC_PATH_BASE.config }}", o: "{{ OPNCC_USER }}", m: '0755'}
+    - {p: "{{ OPNCC_PATH_BASE.lib }}", o: "{{ OPNCC_USER }}", m: '0755'}
     - {p: "{{ OPNCC.path.config.compose }}", o: "{{ OPNCC_USER }}"}
+    # vcs
     - {p: "{{ OPNCC.path.data.gitea }}", o: "{{ OPNCC.users.gitea }}"}
     - {p: "{{ OPNCC.path.config.gitea }}", o: "{{ OPNCC.users.gitea }}"}
+    # logserver
+    - {p: "{{ OPNCC.path.config.graylog }}", o: "{{ OPNCC.users.graylog }}", g: "{{ OPNCC_USER }}"}
+    - {p: "{{ OPNCC.path.data.graylog }}", o: "{{ OPNCC.users.graylog }}"}
+    - {p: "{{ OPNCC.path.data.mongodb }}", o: "{{ OPNCC.users.mongodb }}"}
+    - {p: "{{ OPNCC.path.data.opensearch }}", o: "{{ OPNCC.users.opensearch }}"}
+    - {p: "{{ OPNCC.path.config.compose }}/build_opensearch", o: 'root', g: "{{ OPNCC_USER }}"}
+    - {p: "{{ OPNCC.path.config.compose }}/build_mongodb", o: 'root', g: "{{ OPNCC_USER }}"}
+    - {p: "{{ OPNCC.path.config.compose }}/build_graylog", o: 'root', g: "{{ OPNCC_USER }}"}
 
 - name: OPN-CC | Processing services
   ansible.builtin.import_tasks: services.yml

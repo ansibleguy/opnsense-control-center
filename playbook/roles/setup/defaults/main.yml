@@ -8,22 +8,34 @@ OPNCC_USER: 'opn-cc'
 
 OPNCC:
   users:
-    opn-cc: 1100  # OPNCC_USER
+    opn-cc: 1100  # used to run 'docker-compose'
     gitea: 1101
+    graylog: 1102
+    mongodb: 1103
+    opensearch: 1104
   port:
     gitea:
       web: 8001
       ssh: 2201
     graylog:
       web: 8002
-      log: 514
+      syslog: 5514
+      opensearch:
+        api: 9200
+        perf: 9600
+        dashboard: 8003
   path:
     data:
-      gitea: "{{ OPNCC_PATH_BASE.lib }}/vcs"
+      gitea: "{{ OPNCC_PATH_BASE.lib }}/vcs/gitea"
+      graylog: "{{ OPNCC_PATH_BASE.lib }}/logserver/graylog"
+      mongodb: "{{ OPNCC_PATH_BASE.lib }}/logserver/mongodb"
+      opensearch: "{{ OPNCC_PATH_BASE.lib }}/logserver/opensearch"
     config:
       compose: "{{ OPNCC_PATH_BASE.config }}/docker-compose"
-      gitea: "{{ OPNCC_PATH_BASE.config }}/gitea"
+      gitea: "{{ OPNCC_PATH_BASE.config }}/vcs/gitea"
+      graylog: "{{ OPNCC_PATH_BASE.config }}/logserver/graylog"
     bin:
       compose: '/usr/local/bin/docker-compose'
   network:
-    gitea: '192.168.69.0/29'
+    gitea: '192.168.69.0/28'
+    graylog: '192.168.69.16/28'

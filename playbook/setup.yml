@@ -11,6 +11,7 @@
   vars:
     OPNCC_MANAGE:
       nftables: true
+      logserver: true  # graylog/mongodb/opensearch stack
 
     OPNCC_VARS:
       # domain:
@@ -25,6 +26,15 @@
         allow_ssh: ['192.168.0.0/16', '172.16.0.0/12', '10.0.0.0/8']
         deny: []
         docker: '192.168.69.0/24'
+        docker_default: '192.168.69.240/28'
+
+    OPNCC_VERSIONS:
+      gitea: 'latest'
+      logserver:
+        graylog: '5.0'
+        graylog_min: '5.0.7'
+        mongodb: '5.0.17'
+        opensearch: 'latest'
 
   pre_tasks:
     # - name: Pre-Check | Domain is set and valid
@@ -99,8 +109,19 @@
                   policy: 'drop'
                   # todo: wireguard network(s)
                   rules:
+                    # basic traffic
+                    - {raw: 'ct state {established, related} accept comment "Allow open sessions"'}
+
                     # access between containers
                     - {if: 'br-*', of: 'br-*'}
+                    - {if: 'docker0', of: 'docker0'}
+
+                    # container build
+                    - {raw: "ct state new tcp dport { 80, 443, 123, 53, 853 } ip daddr != $private_ranges log prefix \"NFTables OUT PUBLIC \""}
+                    - {proto: 'tcp', port: [80, 443], dest: '!= $private_ranges', comment: 'HTTP+S for Updates'}
+                    - {proto: ['tcp', 'udp'], port: 123, comment: 'NTP'}
+                    - {proto: 'tcp', port: [53, 853], comment: 'DNS'}
+                    - {proto: 'udp', port: 53, comment: 'DNS'}
 
                 output:
                   hook: 'output'
@@ -143,9 +164,10 @@
             enable: true
             version: '2.18.0'
           nftables:
-            bridge_none: true
+            bridge_none: false  # build-process
             disable_iptables: true
             reload: true
+          address_pool: "base={{ OPNCC_VARS.networks.docker_default }},size=28"
       tags: [docker, setup]
 
     # NOTE: config just for testing purposes for now
@@ -153,12 +175,18 @@
       vars:
         nginx:
           sites:
-            opncc:
+            opncc_vcs:
               domain: 'vcs.opncc'
               aliases: ['vcs.opncc.localhost']
               mode: 'proxy'
               proxy:
                 port: 8001
+            opncc_log:
+              domain: 'log.opncc'
+              aliases: ['log.opncc.localhost']
+              mode: 'proxy'
+              proxy:
+                port: 8002
       tags: [nginx, setup]
 
     - setup

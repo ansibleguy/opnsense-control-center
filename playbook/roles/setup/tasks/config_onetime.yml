@@ -1,0 +1,15 @@
+---
+
+- name: OPN-CC | App Config | Checking if config exists
+  ansible.builtin.stat:
+    path: "{{ OPNCC_PATH_BASE.config }}/{{ _config.f }}"
+  register: otc
+
+- name: OPN-CC | App Config | Copying config if not present
+  ansible.builtin.template:
+    src: "templates/etc/opn-cc/{{ _config.f }}.j2"
+    dest: "{{ OPNCC_PATH_BASE.config }}/{{ _config.f }}"
+    mode: 0640
+    owner: "{{ _config.o }}"
+    group: "{{ _config.g | default(_config.o) }}"
+  when: not otc.stat.exists

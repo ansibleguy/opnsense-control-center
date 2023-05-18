@@ -1,15 +1,27 @@
 from re import match as regex_match
 from re import compile as regex_compile
+from json import loads as json_loads
+from json import JSONDecodeError
+from urllib import request
 
 
 class FilterModule(object):
-
     def filters(self):
         return {
             "nftables_format_list": self.nftables_format_list,
             "ensure_list": self.ensure_list,
             "valid_hostname": self.valid_hostname,
+            "github_latest_release": self.github_latest_release,
         }
+
+    @staticmethod
+    def github_latest_release(user: str, repo: str) -> str:
+        with request.urlopen(f"https://api.github.com/repos/{user}/{repo}/releases/latest") as response:
+            try:
+                return json_loads(response.read())['name']
+
+            except (KeyError, JSONDecodeError):
+                return ''
 
     @staticmethod
     def _valid_domain(name: str) -> bool:

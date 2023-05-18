@@ -1,14 +1,52 @@
 ---
 
-- name: OPN-CC | App configs
+- name: OPN-CC | App Configs
   ansible.builtin.template:
     src: "templates/etc/opn-cc/{{ item.f }}.j2"
     dest: "{{ OPNCC_PATH_BASE.config }}/{{ item.f }}"
     mode: 0640
     owner: "{{ item.o }}"
     group: "{{ item.g | default(item.o) }}"
-  loop:
-    - {f: 'gitea/app.ini', o: "{{ OPNCC.users.gitea }}"}
+  with_items:
+    - {f: 'vcs/gitea/app.ini', o: "{{ OPNCC.users.gitea }}"}
+    - {f: 'logserver/graylog/graylog.conf', o: "{{ OPNCC.users.graylog }}"}
+    - {f: 'logserver/graylog/log4j2.xml', o: "{{ OPNCC.users.graylog }}"}
+
+- name: OPN-CC | One-Time App Configs
+  ansible.builtin.include_tasks: config_onetime.yml
+  loop_control:
+    loop_var: _config
+  with_items:
+    - {f: 'logserver/graylog/secrets.env', o: 'root', g: "{{ OPNCC_USER }}"}
+
+- name: OPN-CC | Download Build-Files
+  ansible.builtin.unarchive:
+    src: "{{ item.u }}"
+    remote_src: true
+    dest: "{{ OPNCC.path.config.compose }}/build_{{ item.n }}/"
+    mode: 0750
+    owner: 'root'
+    group: "{{ OPNCC_USER }}"
+  with_items:
+    - {n: 'opensearch', u: 'https://github.com/opensearch-project/docker-images/archive/refs/heads/main.zip'}
+    - {n: 'mongodb', u: 'https://github.com/docker-library/mongo/archive/refs/heads/master.zip'}
+    - {n: 'graylog', u: "https://github.com/Graylog2/graylog-docker/archive/refs/heads/{{ OPNCC_VERSIONS.logserver.graylog }}.zip"}
+
+- name: OPN-CC | Patch Build-Files (UID/GID/VERSION)
+  ansible.builtin.replace:
+    path: "{{ OPNCC.path.config.compose }}/build_{{ item.p }}"
+    regexp: "{{ item.s }}"
+    replace: "{{ item.r }}"
+  with_items:
+    - {p: 'mongodb/mongo-master/5.0/Dockerfile', s: ' 999 ', r: " {{ OPNCC.users.mongodb }} "}
+    - {p: 'mongodb/mongo-master/5.0/Dockerfile', s: '^ENV MONGO_VERSION.*$ ', r: "ENV MONGO_VERSION {{ OPNCC_VERSIONS.logserver.mongodb }}"}
+    - {p: 'mongodb/mongo-master/5.0/Dockerfile', s: ' keyserver.ubuntu.com ', r: ' hkp://keyserver.ubuntu.com:80 '}
+    - {p: 'mongodb/mongo-master/5.0/Dockerfile',
+       s: 'COPY docker-entrypoint\.sh \/usr\/local\/bin\/\nENTRYPOINT \["docker-entrypoint\.sh"\]',
+       r: 'COPY docker-entrypoint.sh /usr/local/bin/\nRUN chmod 775 /usr/local/bin/docker-entrypoint.sh\nENTRYPOINT ["docker-entrypoint.sh"]'}
+    - {p: "graylog/graylog-docker-{{ OPNCC_VERSIONS.logserver.graylog }}/docker/oss/Dockerfile",
+       s: 'COPY health_check\.sh \/\n\n',
+       r: 'COPY health_check.sh /\nRUN chmod 775 /docker-entrypoint.sh\n\n'}
 
 - name: OPN-CC | Docker-compose configs
   ansible.builtin.template:
@@ -18,7 +56,8 @@
     owner: 'root'
     group: "{{ OPNCC_USER }}"
   loop:
-    - 'gitea'
+    - 'vcs'
+    - 'logserver'
 
 - name: OPN-CC | Docker-compose services
   ansible.builtin.template:
@@ -29,6 +68,7 @@
     group: 'root'
   loop:
     - 'opn-cc-vcs'  # gitea
+    - 'opn-cc-log'  # logserver/graylog
 
 - name: OPN-CC | Enabling services
   ansible.builtin.systemd:
@@ -37,4 +77,5 @@
     daemon_reload: true
   loop:
     - 'opn-cc-vcs'  # gitea
+    - 'opn-cc-log'  # logserver/graylog
 

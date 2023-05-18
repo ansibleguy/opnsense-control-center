@@ -1,0 +1,121 @@
+---
+
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+# see: https://github.com/Graylog2/docker-compose/blob/main/open-core/docker-compose.yml
+
+version: '3.8'
+
+networks:
+  graylog:
+    driver: bridge
+    external: false
+    ipam:
+      driver: default
+      config:
+      - subnet: '{{ OPNCC.network.graylog }}'
+
+services:
+  opensearch:
+    image: 'local/opensearch:{{ OPNCC_VERSIONS.logserver.opensearch }}'
+    build:
+      context: '{{ OPNCC.path.config.compose }}/build_opensearch/docker-images-main/2.x/'
+      dockerfile: '{{ OPNCC.path.config.compose }}/build_opensearch/docker-images-main/2.x/Dockerfile'
+      args:
+        UID: {{ OPNCC.users.opensearch }}
+        GID: {{ OPNCC.users.opensearch }}
+        OS_VERSION: "{{ 'opensearch-project' | github_latest_release('opensearch') if OPNCC_VERSIONS.logserver.opensearch == 'latest' else OPNCC_VERSIONS.logserver.opensearch }}"
+    container_name: 'log-opensearch'
+    user: '{{ OPNCC.users.opensearch }}:{{ OPNCC.users.opensearch }}'
+    environment:
+      UID: {{ OPNCC.users.opensearch }}
+      GID: {{ OPNCC.users.opensearch }}
+      OPENSEARCH_JAVA_OPTS: '-Xms1g -Xmx1g'
+      bootstrap.memory_lock: true
+      discovery.type: 'single-node'
+      action.auto_create_index: false
+      plugins.security.ssl.http.enabled: false
+      plugins.security.disabled: true
+    ulimits:
+      memlock:
+        hard: -1
+        soft: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      # not actively used; but good to have for troubleshooting
+      - '127.0.0.1:{{ OPNCC.port.graylog.opensearch.api }}:9200'
+      - '127.0.0.1:{{ OPNCC.port.graylog.opensearch.perf }}:9600'
+    volumes:
+      - "{{ OPNCC.path.data.opensearch }}:/usr/share/opensearch/data"
+    restart: 'on-failure'
+    networks:
+      - 'graylog'
+
+  mongodb:
+    image: 'local/mongodb:{{ OPNCC_VERSIONS.logserver.mongodb }}'
+    build:
+      context: '{{ OPNCC.path.config.compose }}/build_mongodb/mongo-master/5.0/'
+      dockerfile: '{{ OPNCC.path.config.compose }}/build_mongodb/mongo-master/5.0/Dockerfile'
+    container_name: 'log-mongodb'
+    user: '{{ OPNCC.users.mongodb }}:{{ OPNCC.users.mongodb }}'
+    environment:
+      UID: {{ OPNCC.users.mongodb }}
+      GID: {{ OPNCC.users.mongodb }}
+    volumes:
+      - '{{ OPNCC.path.data.mongodb }}:/data/db'
+    restart: 'on-failure'
+    networks:
+      - 'graylog'
+
+  graylog:
+    hostname: 'server'
+    image: 'local/graylog:{{ OPNCC_VERSIONS.logserver.graylog_min }}'
+    build:
+      context: '{{ OPNCC.path.config.compose }}/build_graylog/graylog-docker-{{ OPNCC_VERSIONS.logserver.graylog }}/'
+      dockerfile: '{{ OPNCC.path.config.compose }}/build_graylog/graylog-docker-{{ OPNCC_VERSIONS.logserver.graylog }}/docker/oss/Dockerfile'
+      args:
+        GRAYLOG_UID: {{ OPNCC.users.graylog }}
+        GRAYLOG_GID: {{ OPNCC.users.graylog }}
+        GRAYLOG_VERSION: "{{ OPNCC_VERSIONS.logserver.graylog_min }}"
+    container_name: 'log-graylog'
+    user: '{{ OPNCC.users.graylog }}:{{ OPNCC.users.graylog }}'
+    depends_on:
+      opensearch:
+        condition: 'service_started'
+      mongodb:
+        condition: 'service_started'
+    entrypoint: '/usr/bin/tini -- wait-for-it opensearch:9200 --  /docker-entrypoint.sh'
+    env_file:
+      - '{{ OPNCC_PATH_BASE.config }}/logserver/graylog/secrets.env'
+    environment:
+      UID: {{ OPNCC.users.graylog }}
+      GID: {{ OPNCC.users.graylog }}
+      GRAYLOG_NODE_ID_FILE: '/usr/share/graylog/data/config/node-id'
+      GRAYLOG_HTTP_BIND_ADDRESS: '0.0.0.0:9000'
+      GRAYLOG_HTTP_EXTERNAL_URI: 'http://localhost:9000/'
+      GRAYLOG_ELASTICSEARCH_HOSTS: 'http://opensearch:9200'
+      GRAYLOG_MONGODB_URI: 'mongodb://mongodb:27017/graylog'
+    ports:
+      - '127.0.0.1:{{ OPNCC.port.graylog.web }}:9000'
+      - '{{ OPNCC.port.graylog.syslog }}:1514'
+      - '{{ OPNCC.port.graylog.syslog }}:1514/udp'
+    volumes:
+      - '{{ OPNCC.path.data.graylog }}/data:/usr/share/graylog/data/data'
+      - '{{ OPNCC.path.data.graylog }}/journal:/usr/share/graylog/data/journal'
+      - '{{ OPNCC.path.config.graylog }}:/usr/share/graylog/data/config'
+    restart: 'on-failure'
+    networks:
+      - 'graylog'
+
+  opensearch-dashboard:  # todo: opt-in
+    image: 'opensearchproject/opensearch-dashboards:{{ OPNCC_VERSIONS.logserver.opensearch }}'
+    container_name: 'log-opensearch-dashboard'
+    ports:
+      - '127.0.0.1:{{ OPNCC.port.graylog.opensearch.dashboard }}:5601'
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
+    networks:
+      - 'graylog'

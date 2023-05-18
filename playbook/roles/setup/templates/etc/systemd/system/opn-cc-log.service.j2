@@ -2,7 +2,7 @@
 # ansibleguy: opnsense-control-center
 
 [Unit]
-Description=OPNSense Control Center - VCS Service
+Description=OPNSense Control Center - Logserver Service
 After=docker.service
 BindsTo=docker.service
 
@@ -10,18 +10,18 @@ BindsTo=docker.service
 Type=simple
 User={{ OPNCC_USER }}
 Group={{ OPNCC_USER }}
-ExecStart={{ OPNCC.path.bin.compose }} -f {{ OPNCC.path.config.compose }}/vcs.yml up
+ExecStart={{ OPNCC.path.bin.compose }} -f {{ OPNCC.path.config.compose }}/logserver.yml up
 {% if OPNCC_MANAGE.nftables | bool %}
 ExecStartPost=/bin/bash -c "sudo /usr/bin/systemctl reload nftables.service"
 {% endif %}
-ExecStop={{ OPNCC.path.bin.compose }} -f {{ OPNCC.path.config.compose }}/vcs.yml down --remove-orphans
+ExecStop={{ OPNCC.path.bin.compose }} -f {{ OPNCC.path.config.compose }}/logserver.yml down --remove-orphans
 
 Restart=on-failure
 RestartSec=10
 
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=opncc_vcs
+SyslogIdentifier=opncc_log
 
 [Install]
 WantedBy=multi-user.target
