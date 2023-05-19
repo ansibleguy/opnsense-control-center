@@ -6,3 +6,7 @@ roles:
   - src: 'ansibleguy.infra_nftables'
   - src: 'ansibleguy.infra_pki'
   - src: 'ansibleguy.infra_certs'
+
+collections:
+  - 'community.general'
+  - 'ansible.posix'
