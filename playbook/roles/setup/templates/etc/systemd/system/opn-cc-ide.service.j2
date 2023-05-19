@@ -1,0 +1,27 @@
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+[Unit]
+Description=OPNSense Control Center - IDE Service
+After=docker.service
+BindsTo=docker.service
+
+[Service]
+Type=simple
+User={{ OPNCC_USER }}
+Group={{ OPNCC_USER }}
+ExecStart={{ OPNCC.path.bin.compose }} -f {{ OPNCC.path.config.compose }}/ide.yml up
+{% if OPNCC_MANAGE.nftables | bool %}
+ExecStartPost=/bin/bash -c "sudo /usr/bin/systemctl reload nftables.service"
+{% endif %}
+ExecStop={{ OPNCC.path.bin.compose }} -f {{ OPNCC.path.config.compose }}/ide.yml down
+
+Restart=on-failure
+RestartSec=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=opncc_ide
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,35 @@
+---
+
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+# see: https://coder.com/docs/code-server/latest/install#docker
+
+version: '3'
+
+networks:
+  ide:
+    driver: 'bridge'
+    external: false
+    ipam:
+      driver: 'default'
+      config:
+      - subnet: '{{ OPNCC.network.ide }}'
+
+services:
+  codeserver:
+    image: 'codercom/code-server:{{ OPNCC_VERSIONS.codeserver }}'
+    extra_hosts: {{ OPNCC.docker.extra_hosts }}
+    container_name: 'ide-codeserver'
+    user: '{{ OPNCC.users.ide }}:{{ OPNCC.users.ide }}'
+    restart: 'on-failure'
+    networks:
+      - 'ide'
+    volumes:
+      - '{{ OPNCC.path.data.ide }}:/home/coder/project/notes:rw'
+      - '{{ OPNCC.path.data.ansible }}:/home/coder/project/ansible:rw'
+      - '{{ OPNCC.path.data.gitea }}/git:/home/coder/project/git:ro'
+      - '{{ OPNCC_PATH_BASE.config }}/git:/home/coder/project/config:ro'
+      - '{{ OPNCC.path.config.ide }}:/home/coder/.config/code-server:rw'
+    ports:
+      - '127.0.0.1:{{ OPNCC.port.ide }}:8080'
