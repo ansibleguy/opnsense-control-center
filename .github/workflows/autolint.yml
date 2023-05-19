@@ -44,7 +44,7 @@ jobs:
       - name: Preparing requirements for AnsibleLint
         run: |
           ansible-galaxy role install -r playbook/requirements.yml -p ./playbook/roles
-          ansible-galaxy collection install -r requirements.yml -p ./playbook/collections
+          ansible-galaxy collection install -r playbook/rrequirements.yml -p ./playbook/collections
         shell: bash
 
       - name: Running AnsibleLint
