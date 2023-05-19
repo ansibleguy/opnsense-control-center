@@ -47,8 +47,8 @@ services:
         hard: 65536
     ports:
       # not actively used; but good to have for troubleshooting
-      - '127.0.0.1:{{ OPNCC.port.graylog.opensearch.api }}:9200'
-      - '127.0.0.1:{{ OPNCC.port.graylog.opensearch.perf }}:9600'
+      - '127.0.0.1:{{ OPNCC_VARS.port.graylog.opensearch.api }}:9200'
+      - '127.0.0.1:{{ OPNCC_VARS.port.graylog.opensearch.perf }}:9600'
     volumes:
       - "{{ OPNCC.path.data.opensearch }}:/usr/share/opensearch/data"
     restart: 'on-failure'
@@ -100,9 +100,9 @@ services:
       GRAYLOG_ELASTICSEARCH_HOSTS: 'http://opensearch:9200'
       GRAYLOG_MONGODB_URI: 'mongodb://mongodb:27017/graylog'
     ports:
-      - '127.0.0.1:{{ OPNCC.port.graylog.web }}:9000'
-      - '{{ OPNCC.port.graylog.syslog }}:1514'
-      - '{{ OPNCC.port.graylog.syslog }}:1514/udp'
+      - '127.0.0.1:{{ OPNCC_VARS.port.graylog.web }}:9000'
+      - '{{ OPNCC_VARS.port.graylog.syslog }}:1514'
+      - '{{ OPNCC_VARS.port.graylog.syslog }}:1514/udp'
     volumes:
       - '{{ OPNCC.path.data.graylog }}/data:/usr/share/graylog/data/data'
       - '{{ OPNCC.path.data.graylog }}/journal:/usr/share/graylog/data/journal'
@@ -116,7 +116,7 @@ services:
     container_name: 'log-opensearch-dashboard'
     extra_hosts: {{ OPNCC.docker.extra_hosts }}
     ports:
-      - '127.0.0.1:{{ OPNCC.port.graylog.opensearch.dashboard }}:5601'
+      - '127.0.0.1:{{ OPNCC_VARS.port.graylog.opensearch.dashboard }}:5601'
     environment:
       OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
     networks:

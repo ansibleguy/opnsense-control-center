@@ -126,7 +126,7 @@ http_bind_address = 0.0.0.0:9000
 # This configuration setting *must not* contain a wildcard address!
 #
 # Default: http://$http_bind_address/
-#http_publish_uri = http://192.168.1.1:9000/
+http_publish_uri = https://{{ OPNCC_VARS.domain }}/{{ OPNCC_VARS.url.logserver }}/
 
 #### External Graylog URI
 #
@@ -140,7 +140,7 @@ http_bind_address = 0.0.0.0:9000
 # This setting can be overriden on a per-request basis with the "X-Graylog-Server-URL" HTTP request header.
 #
 # Default: $http_publish_uri
-#http_external_uri =
+http_external_uri = https://{{ OPNCC_VARS.domain }}/{{ OPNCC_VARS.url.logserver }}/
 
 #### Enable CORS headers for HTTP interface
 #

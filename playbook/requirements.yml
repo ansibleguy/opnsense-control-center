@@ -5,5 +5,4 @@ roles:
   - src: 'ansibleguy.infra_wireguard'
   - src: 'ansibleguy.infra_nftables'
   - src: 'ansibleguy.infra_pki'
-  - src: 'ansibleguy.infra_nginx'
   - src: 'ansibleguy.infra_certs'

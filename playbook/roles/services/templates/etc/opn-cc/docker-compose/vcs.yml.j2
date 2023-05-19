@@ -35,5 +35,5 @@ services:
       - '/etc/timezone:/etc/timezone:ro'
       - '/etc/localtime:/etc/localtime:ro'
     ports:
-      - '127.0.0.1:{{ OPNCC.port.gitea.web }}:3000'
-      - '127.0.0.1:{{ OPNCC.port.gitea.ssh }}:2222'
+      - '127.0.0.1:{{ OPNCC_VARS.port.gitea.web }}:3000'
+      - '127.0.0.1:{{ OPNCC_VARS.port.gitea.ssh }}:2222'

@@ -32,4 +32,4 @@ services:
       - '{{ OPNCC_PATH_BASE.config }}/git:/home/coder/config:ro'
       - '{{ OPNCC.path.config.ide }}:/home/coder/.config/code-server:rw'
     ports:
-      - '127.0.0.1:{{ OPNCC.port.ide }}:8080'
+      - '127.0.0.1:{{ OPNCC_VARS.port.ide }}:8080'

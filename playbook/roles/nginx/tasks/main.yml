@@ -1,0 +1,52 @@
+---
+
+- name: OPN-CC | Nginx | Creating certificate
+  ansible.builtin.include_role:
+    name: ansibleguy.infra_certs
+  vars:
+    certs:
+      mode: 'ca'
+      path: '/etc/nginx/ssl'
+      owner_key: 'www-data'
+      group_key: 'www-data'
+      owner_cert: 'www-data'
+      group_cert: 'www-data'
+      cert:
+        name: 'opncc'
+        cn: 'OPNSense Control Center'
+        org: 'AnsibleGuy'
+        country: 'AT'
+        state: 'Styria'
+        domains: "{{ [OPNCC_VARS.domain] + OPNCC_VARS.aliases | ensure_list }}"
+        ips: "{{ ansible_all_ipv4_addresses + ['127.0.0.1'] }}"
+      ca:
+        path: '/etc/nginx/ssl'
+        cn: 'OPNSense Control Center - Web CA'
+        org: 'AnsibleGuy'
+        country: 'AT'
+        state: 'Styria'
+  tags: certs
+
+- name: OPN-CC | Nginx | Adding config
+  ansible.builtin.template:
+    src: "templates/etc/nginx/sites-available/{{ item }}.j2"
+    dest: "/etc/nginx/sites-available/{{ item }}"
+    mode: 0640
+    owner: 'root'
+    group: 'www-data'
+  tags: config
+  notify: Restart-nginx
+  loop:
+    - 'status'
+    - 'opncc'
+
+- name: OPN-CC | Nginx | Enabling config
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ item }}"
+    dest: "/etc/nginx/sites-enabled/{{ item }}"
+    state: link
+  tags: config
+  notify: Restart-nginx
+  loop:
+    - 'status'
+    - 'opncc'

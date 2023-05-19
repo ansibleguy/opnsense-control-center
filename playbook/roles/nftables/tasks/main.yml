@@ -52,7 +52,7 @@
                 - {proto: 'tcp', port: ["{{ OPNCC_VARS.port.http }}", "{{ OPNCC_VARS.port.https }}"], src: "{{ OPNCC_VARS.networks.allow_web | default(omit) }}"}
 
                 # log forwarding
-                - {proto: ['tcp', 'udp'], port: 5514, comment: 'Syslog to Logserver', src: '$private_ranges'}
+                - {proto: ['tcp', 'udp'], port: "{{ OPNCC_VARS.port.graylog.syslog }}", comment: 'Syslog to Logserver', src: '$private_ranges'}
 
             forward:
               hook: 'forward'

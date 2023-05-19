@@ -24,4 +24,4 @@ scp -P "$SSH_PORT" -r "$(pwd)/../playbook/" "$SSH_TGT:$SCP_TGT"
 
 # replace config
 ssh -p "$SSH_PORT" "$SSH_TGT" "sed -i 's/        ssh: 22/        ssh: $SSH_PORT/g' $SCP_TGT/playbook/setup.yml"
-ssh -p "$SSH_PORT" "$SSH_TGT" "sed -i \"s/      domain: ''.*$/      domain: $DOM/g\" $SCP_TGT/playbook/setup.yml"
+ssh -p "$SSH_PORT" "$SSH_TGT" "sed -i \"s/ domain: ''.*$/ domain: '$DOM'/g\" $SCP_TGT/playbook/setup.yml"

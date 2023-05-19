@@ -7,7 +7,7 @@
   gather_facts: true
   module_defaults:
     ansible.builtin.setup:
-      gather_subset: ['!all', 'os_family']
+      gather_subset: ['!all', 'os_family', 'all_ipv4_addresses']
 
   vars:
     OPNCC_MANAGE:
@@ -16,6 +16,7 @@
 
     OPNCC_VARS:
       domain: ''
+      aliases: []
       mail_domain: ''
       admin_mail: ''
 
@@ -24,6 +25,19 @@
         https: 443
         ssh: 22
         firewalls: [443, 22]  # ports that are in use for firewall http+s
+        gitea:
+          web: 8001
+          ssh: 2222
+        graylog:
+          web: 8002
+          syslog: 5514
+          opensearch:
+            api: 9200
+            perf: 9600
+            dashboard: 8003
+        ide: 8004
+        semaphore: 8005
+
       networks:
         # todo: check any src works if unset/empty
         allow_web: ['192.168.0.0/16', '172.16.0.0/12', '10.0.0.0/8']
@@ -31,6 +45,13 @@
         deny: []
         docker: '192.168.69.0/24'
         docker_default: '192.168.69.240/28'
+      url:
+        default: 'ide'
+        ansible: 'ans'
+        logserver: 'log'
+        ide: 'ide'
+        vcs: 'vcs'
+        opensearch_dashboard: 'osdb'
 
     OPNCC_VERSIONS:
       gitea: 'latest'  # vcs
@@ -57,6 +78,8 @@
       failed_when: >
         pc_ssh.failed or
         ':' + OPNCC_VARS.port.ssh | string not in pc_ssh.stdout
+      args:
+        executable: '/bin/bash'
       changed_when: false
       when: OPNCC_MANAGE.nftables | bool
 
@@ -78,46 +101,8 @@
           address_pool: "base={{ OPNCC_VARS.networks.docker_default }},size=28"
       tags: [docker, setup]
 
-    - role: ansibleguy.infra_nginx  # NOTE: config just for testing purposes for now
-      vars:
-        nginx:
-          sites:
-            opncc_vcs:
-              domain: 'vcs.opncc'
-              aliases: ['vcs.opncc.localhost']
-              mode: 'proxy'
-              proxy:
-                port: 8001
-              security:
-                restrict_methods: false
-            opncc_log:
-              domain: 'log.opncc'
-              aliases: ['log.opncc.localhost']
-              mode: 'proxy'
-              proxy:
-                port: 8002
-              security:
-                restrict_methods: false
-            opncc_ide:
-              domain: 'ide.opncc'
-              aliases: ['ide.opncc.localhost']
-              mode: 'proxy'
-              proxy:
-                port: 8004
-                headers:
-                  Upgrade: '$http_upgrade'
-                  Connection: 'upgrade'
-                  Accept-Encoding: 'gzip'
-              security:
-                restrict_methods: false
-            opncc_ans:
-              domain: 'ans.opncc'
-              aliases: ['ans.opncc.localhost']
-              mode: 'proxy'
-              proxy:
-                port: 8005
-              security:
-                restrict_methods: false
+    - role: nginx
       tags: [nginx, setup, services]
 
     - role: setup
+      tags: [setup, services]

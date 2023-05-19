@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+server {
+  listen 127.0.0.1:8080;
+
+  # log config
+  access_log syslog:server=unix:/dev/log,tag=nginx_status,nohostname,severity=info combined;
+  error_log  syslog:server=unix:/dev/log,tag=nginx_status,nohostname,severity=error;
+
+  # status page handling
+  location = /basic_status {
+    stub_status;
+  }
+}

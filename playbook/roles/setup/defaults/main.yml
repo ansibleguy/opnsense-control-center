@@ -16,20 +16,6 @@ OPNCC:
     ide: 1105
     semaphore: 1106  # ansible
 
-  port:
-    gitea:
-      web: 8001
-      ssh: 2222
-    graylog:
-      web: 8002
-      syslog: 5514
-      opensearch:
-        api: 9200
-        perf: 9600
-        dashboard: 8003
-    ide: 8004
-    semaphore: 8005
-
   path:
     data:
       gitea: "{{ OPNCC_PATH_BASE.lib }}/vcs/gitea"

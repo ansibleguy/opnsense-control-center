@@ -38,6 +38,6 @@ services:
       - '{{ OPNCC.path.config.semaphore }}:/etc/semaphore'
       - '{{ OPNCC.path.data.semaphore }}:/home/semaphore'
     ports:
-      - '127.0.0.1:{{ OPNCC.port.semaphore }}:3000'
+      - '127.0.0.1:{{ OPNCC_VARS.port.semaphore }}:3000'
     networks:
       - 'ansible'
