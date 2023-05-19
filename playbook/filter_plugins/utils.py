@@ -3,6 +3,7 @@ from re import compile as regex_compile
 from json import loads as json_loads
 from json import JSONDecodeError
 from urllib import request
+from hashlib import sha256
 
 
 class FilterModule(object):
@@ -12,13 +13,18 @@ class FilterModule(object):
             "ensure_list": self.ensure_list,
             "valid_hostname": self.valid_hostname,
             "github_latest_release": self.github_latest_release,
+            "sha256sum": self.sha256sum,
         }
+
+    @staticmethod
+    def sha256sum(text: str) -> str:
+        return sha256(text.encode('utf-8')).hexdigest()
 
     @staticmethod
     def github_latest_release(user: str, repo: str) -> str:
         with request.urlopen(f"https://api.github.com/repos/{user}/{repo}/releases/latest") as response:
             try:
-                return json_loads(response.read())['name']
+                return json_loads(response.read())['name'].replace('v', '')
 
             except (KeyError, JSONDecodeError):
                 return ''

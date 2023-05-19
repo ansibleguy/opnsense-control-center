@@ -102,6 +102,10 @@
               mode: 'proxy'
               proxy:
                 port: 8004
+                headers:
+                  Upgrade: '$http_upgrade'
+                  Connection: 'upgrade'
+                  Accept-Encoding: 'gzip'
               security:
                 restrict_methods: false
             opncc_ans:

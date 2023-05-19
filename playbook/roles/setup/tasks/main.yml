@@ -21,6 +21,13 @@
     name: 'git'
     state: present
 
+- name: OPN-CC | Configure log forwarding
+  ansible.builtin.template:
+    src: 'templates/etc/rsyslog.d/10-logserver.conf.j2'
+    dest: '/etc/rsyslog.d/10-logserver.conf'
+    mode: 0644
+  notify: Restart-rsyslog
+
 - name: OPN-CC | Creating directories
   ansible.builtin.file:
     path: "{{ item.p }}"
@@ -58,4 +65,5 @@
     - {p: "{{ OPNCC.path.config.compose }}/build_semaphore", o: 'root', g: "{{ OPNCC_USER }}"}
 
 - name: OPN-CC | Processing services
-  ansible.builtin.import_tasks: services.yml
+  ansible.builtin.import_role:
+    name: services

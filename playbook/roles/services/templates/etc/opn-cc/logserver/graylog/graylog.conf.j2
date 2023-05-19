@@ -59,7 +59,7 @@ node_id_file = /usr/share/graylog/data/config/node-id
 # Generate one by using for example: pwgen -N 1 -s 96
 # ATTENTION: This value must be the same on all Graylog nodes in the cluster.
 # Changing this value after installation will render all user sessions and encrypted values in the database invalid. (e.g. encrypted access tokens)
-password_secret =
+password_secret = {{ lookup('password', OPNCC.path.config.graylog + '/salt.txt chars=ascii_letters,digits length=96') }}
 
 # The default root user is named 'admin'
 #root_username = admin
@@ -70,11 +70,11 @@ password_secret =
 # modify it in this file.
 # Create one by using for example: echo -n yourpassword | shasum -a 256
 # and put the resulting hash value into the following line
-root_password_sha2 =
+root_password_sha2 = {{ ('OPN-CC-' + lookup('password', OPNCC.path.config.graylog + '/root.txt chars=ascii_letters,digits length=6')) | sha256sum }}
 
 # The email address of the root user.
 # Default is empty
-#root_email = ""
+root_email = "{{ OPNCC_VARS.admin_mail }}"
 
 # The time zone setting of the root user. See http://www.joda.org/joda-time/timezones.html for a list of valid time zones.
 # Default is UTC
@@ -575,14 +575,14 @@ mongodb_threads_allowed_to_block_multiplier = 5
 
 
 # Email transport
-#transport_email_enabled = false
-#transport_email_hostname = mail.example.com
-#transport_email_port = 587
-#transport_email_use_auth = true
+transport_email_enabled = true
+transport_email_hostname = {{ OPNCC_DNS_HOST }}
+transport_email_port = 25
+transport_email_use_auth = false
 #transport_email_auth_username = you@example.com
 #transport_email_auth_password = secret
-#transport_email_subject_prefix = [graylog]
-#transport_email_from_email = graylog@example.com
+transport_email_subject_prefix = [OPNSense Control Center - Logserver]
+transport_email_from_email = logserver-{{ OPNCC_MAIL_BASE }}
 
 # Encryption settings
 #
@@ -590,11 +590,11 @@ mongodb_threads_allowed_to_block_multiplier = 5
 #    Using SMTP with STARTTLS *and* SMTPS at the same time is *not* possible.
 
 # Use SMTP with STARTTLS, see https://en.wikipedia.org/wiki/Opportunistic_TLS
-#transport_email_use_tls = true
+transport_email_use_tls = false
 
 # Use SMTP over SSL (SMTPS), see https://en.wikipedia.org/wiki/SMTPS
 # This is deprecated on most SMTP services!
-#transport_email_use_ssl = false
+transport_email_use_ssl = false
 
 
 # Specify and uncomment this if you want to include links to the stream in your stream alert mails.

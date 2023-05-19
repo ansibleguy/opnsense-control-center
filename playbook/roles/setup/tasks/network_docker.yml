@@ -19,7 +19,7 @@
     groups: 'docker'
     append: true
 
-- name: OPN-CC | Docker | Allowing service-user to reload NFTables
+- name: OPN-CC | Docker | Allowing service-user to reload NFTables (to flush unwanted docker IPTables rules)
   ansible.builtin.copy:
     content: |
       # ansible_managed

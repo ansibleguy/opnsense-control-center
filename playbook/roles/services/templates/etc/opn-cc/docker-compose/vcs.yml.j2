@@ -8,18 +8,13 @@
 version: '3'
 
 networks:
-  gitea:
+  vcs:
     driver: 'bridge'
     external: false
     ipam:
       driver: 'default'
       config:
-      - subnet: '{{ OPNCC.network.gitea }}'
-
-# todo: 'extra_hosts' entry that points to the host-system
-#  for mail-relay and so on
-# extra_hosts:
-#   - "somehost:162.242.195.82"
+      - subnet: '{{ OPNCC.network.vcs }}'
 
 
 services:
@@ -30,9 +25,10 @@ services:
       USER_UID: {{ OPNCC.users.gitea }}
       USER_GID: {{ OPNCC.users.gitea }}
     user: '{{ OPNCC.users.gitea }}:{{ OPNCC.users.gitea }}'
-    restart: 'no'
+    restart: 'on-failure'
+    extra_hosts: {{ OPNCC.docker.extra_hosts }}
     networks:
-      - 'gitea'
+      - 'vcs'
     volumes:
       - '{{ OPNCC.path.data.gitea }}:/var/lib/gitea:rw'
       - '{{ OPNCC.path.config.gitea }}:/etc/gitea:rw'
@@ -40,4 +36,4 @@ services:
       - '/etc/localtime:/etc/localtime:ro'
     ports:
       - '127.0.0.1:{{ OPNCC.port.gitea.web }}:3000'
-      - '127.0.0.1:{{ OPNCC.port.gitea.ssh }}:22'
+      - '127.0.0.1:{{ OPNCC.port.gitea.ssh }}:2222'

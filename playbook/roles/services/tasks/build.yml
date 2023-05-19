@@ -1,26 +1,6 @@
 ---
 
-- name: OPN-CC | App Configs
-  ansible.builtin.template:
-    src: "templates/etc/opn-cc/{{ item.f }}.j2"
-    dest: "{{ OPNCC_PATH_BASE.config }}/{{ item.f }}"
-    mode: 0640
-    owner: "{{ item.o }}"
-    group: "{{ item.g | default(item.o) }}"
-  with_items:
-    - {f: 'vcs/gitea/app.ini', o: "{{ OPNCC.users.gitea }}"}
-    - {f: 'logserver/graylog/log4j2.xml', o: "{{ OPNCC.users.graylog }}"}
-    - {f: 'ide/config.yaml', o: "{{ OPNCC.users.ide }}"}
-    - {f: 'logserver/graylog/graylog.conf', o: "{{ OPNCC.users.graylog }}", m: '0400'}
-    - {f: 'ansible/semaphore/config.json', o: "{{ OPNCC.users.semaphore }}", m: '0400'}
-
-- name: OPN-CC | One-Time App Configs
-  ansible.builtin.include_tasks: config_onetime.yml
-  loop_control:
-    loop_var: _config
-  with_items: []
-
-- name: OPN-CC | Download Container Build-Files
+- name: OPN-CC | Services | Build | Download Container Build-Files
   ansible.builtin.unarchive:
     src: "{{ item.u }}"
     remote_src: true
@@ -34,7 +14,7 @@
     - {n: 'graylog', u: "https://github.com/Graylog2/graylog-docker/archive/refs/heads/{{ OPNCC_VERSIONS.logserver.graylog }}.zip"}
 
 # NOTE: build-process expects git repo..
-- name: OPN-CC | Cloning Container Build-Files
+- name: OPN-CC | Services | Build | Cloning Container Build-Files
   ansible.builtin.git:
     repo: "{{ item.r }}"
     dest: "{{ OPNCC.path.config.compose }}/build_{{ item.n }}/"
@@ -44,7 +24,7 @@
   with_items:
     - {n: 'semaphore', r: 'https://github.com/ansible-semaphore/semaphore.git', v: "v{{ OPN_VERSIONS_LATEST.semaphore }}"}
 
-- name: OPN-CC | Patch Container Build-Files (UID/GID/VERSION)
+- name: OPN-CC | Services | Build | Patch Container Build-Files (UID/GID/VERSION)
   ansible.builtin.replace:
     path: "{{ OPNCC.path.config.compose }}/build_{{ item.p }}"
     regexp: "{{ item.s }}"
@@ -63,40 +43,3 @@
     - {p: 'semaphore/deployment/docker/prod/buildx.Dockerfile', s: ' 1001', r: " {{ OPNCC.users.semaphore }}"}
     - {p: 'semaphore/deployment/docker/prod/goss.yaml', s: 'uid: 1001', r: "uid: {{ OPNCC.users.semaphore }}"}
     - {p: 'semaphore/deployment/docker/prod/bin/install', s: ' 1001:', r: " {{ OPNCC.users.semaphore }}:"}
-
-- name: OPN-CC | Docker-compose configs
-  ansible.builtin.template:
-    src: "templates/etc/opn-cc/docker-compose/{{ item }}.yml.j2"
-    dest: "{{ OPNCC.path.config.compose }}/{{ item }}.yml"
-    mode: 0640
-    owner: 'root'
-    group: "{{ OPNCC_USER }}"
-  loop:
-    - 'vcs'
-    - 'logserver'
-    - 'ide'
-    - 'ansible'
-
-- name: OPN-CC | Docker-compose services
-  ansible.builtin.template:
-    src: "templates/etc/systemd/system/{{ item }}.service.j2"
-    dest: "/etc/systemd/system/{{ item }}.service"
-    mode: 0644
-    owner: 'root'
-    group: 'root'
-  loop:
-    - 'opn-cc-vcs'  # gitea
-    - 'opn-cc-log'  # logserver/graylog
-    - 'opn-cc-ide'  # code-server
-    - 'opn-cc-ansible'  # ansible/semaphore
-
-- name: OPN-CC | Enabling services
-  ansible.builtin.systemd:
-    name: "{{ item }}.service"
-    enabled: true
-    daemon_reload: true
-  loop:
-    - 'opn-cc-vcs'  # gitea
-    - 'opn-cc-log'  # logserver/graylog
-    - 'opn-cc-ide'  # code-server
-    - 'opn-cc-ansible'  # ansible/semaphore

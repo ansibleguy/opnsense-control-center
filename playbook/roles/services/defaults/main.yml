@@ -1,0 +1,11 @@
+---
+
+OPNCC_DNS_HOST: 'opncc-host'
+OPNCC_MAIL_BASE: "opn-cc@{{ OPNCC_VARS.mail_domain | default(OPNCC_VARS.domain, true) }}"
+
+# if latest => pull current release from github
+OPN_VERSIONS_LATEST:
+  # gitea: "{{ 'go-gitea' | github_latest_release('gitea') if OPNCC_VERSIONS.gitea == 'latest' else OPNCC_VERSIONS.gitea }}"
+  semaphore: "{{ 'ansible-semaphore' | github_latest_release('semaphore') if OPNCC_VERSIONS.semaphore == 'latest' else OPNCC_VERSIONS.semaphore }}"
+  opensearch: "{{ 'opensearch-project' | github_latest_release('opensearch') if OPNCC_VERSIONS.logserver.opensearch == 'latest' else OPNCC_VERSIONS.logserver.opensearch }}"
+

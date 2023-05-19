@@ -8,6 +8,8 @@ The API interaction will mainly be done using [Ansible](https://www.ansible.com)
 
 Status updates may be fetched using plain Python3.
 
+----
+
 ## Development
 
 Feel free to..
@@ -20,6 +22,8 @@ Feel free to..
 
 Not yet in a usable state!
 
+----
+
 ## Main parts
 
 * [OPNSense Ansible Collection](https://github.com/ansibleguy/collection_opnsense)
@@ -29,6 +33,8 @@ Not yet in a usable state!
 * [Graylog for centralized logging incl. analysis and alerting](https://github.com/Graylog2/graylog2-server)
 
 * [Config and information versioning using git (with WebUI)](https://github.com/go-gitea/gitea)
+
+* [Config management using Web IDE/Editor](https://github.com/coder/code-server)
 
 * custom [Django-based WebUI](https://github.com/django/django) to..
   * manage configuration
@@ -41,6 +47,31 @@ Not yet in a usable state!
     * relevant filesystem config-directories
     * ansible-playbooks in 'check-mode'
   * alerting rules if changes are found
+
+----
+
+## Topology
+
+Services use docker-compose to manage docker containers.
+
+```bash
+.
+├── nginx.service  # web proxy, handles authentication
+└── docker.service
+    ├── opn-cc-ansible.service
+    │   └── semaphoreui/semaphore
+    ├── opn-cc-ide.service  # Web-IDE/Editor
+    │   └── codercom/code-server
+    ├── opn-cc-log.service  # log server
+    │   ├── graylog/graylog
+    │   ├── mongo
+    │   ├── opensearchproject/opensearch
+    │   └── opensearchproject/opensearch-dashboards  # opt-in
+    └── opn-cc-vcs.service  # version control system
+        └── gitea/gitea
+```
+
+----
 
 ## Thoughts
 

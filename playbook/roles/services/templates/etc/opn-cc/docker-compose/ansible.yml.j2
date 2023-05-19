@@ -26,6 +26,7 @@ services:
     user: '{{ OPNCC.users.semaphore }}:{{ OPNCC.users.semaphore }}'
     extra_hosts: {{ OPNCC.docker.extra_hosts }}
     restart: 'unless-stopped'
+    # todo: container fails with exit-code 0 (?!) - might not be restarted..
     environment:
       SEMAPHORE_VERSION: '{{ OPN_VERSIONS_LATEST.semaphore }}'
       SEMAPHORE_DB_DIALECT: 'bolt'

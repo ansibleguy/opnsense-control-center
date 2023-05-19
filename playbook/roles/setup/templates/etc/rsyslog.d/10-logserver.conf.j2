@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+$EscapeControlCharactersOnReceive off
+*.* @127.0.0.1:5514;RSYSLOG_SyslogProtocol23Format
