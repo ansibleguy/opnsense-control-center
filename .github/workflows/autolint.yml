@@ -43,12 +43,13 @@ jobs:
 
       - name: Preparing requirements for AnsibleLint
         run: |
-          ansible-galaxy role install -r playbook/requirements.yml -p ./playbook/roles
-          ansible-galaxy collection install -r playbook/requirements.yml -p ./playbook/collections
+          mkdir -p /tmp/reqs
+          ansible-galaxy role install -r playbook/requirements.yml -p /tmp/reqs/roles
+          ansible-galaxy collection install -r playbook/requirements.yml -p /tmp/reqs/collections
         shell: bash
 
       - name: Running AnsibleLint
         run: |
           cd playbook
-          ansible-lint -c .ansible-lint.yml
+          ANSIBLE_COLLECTIONS_PATH=/tmp/reqs/collections ANSIBLE_ROLES_PATH=/tmp/req/roles:${{ github.workspace }}/playbook/roles ansible-lint -c .ansible-lint.yml
         shell: bash
