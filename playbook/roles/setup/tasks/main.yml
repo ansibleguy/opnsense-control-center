@@ -1,5 +1,11 @@
 ---
 
+- name: OPN-CC | Adding groups
+  ansible.builtin.group:
+    name: "{{ item.key }}"
+    gid: "{{ item.value }}"
+  with_dict: "{{ OPNCC.users }}"
+
 - name: OPN-CC | Adding service-users
   ansible.builtin.user:
     name: "{{ item.key }}"
@@ -9,6 +15,11 @@
 
 - name: OPN-CC | Docker & Network settings
   ansible.builtin.import_tasks: network_docker.yml
+
+- name: OPN-CC | Installing Git
+  ansible.builtin.apt:
+    name: 'git'
+    state: present
 
 - name: OPN-CC | Creating directories
   ansible.builtin.file:
@@ -34,6 +45,17 @@
     - {p: "{{ OPNCC.path.config.compose }}/build_opensearch", o: 'root', g: "{{ OPNCC_USER }}"}
     - {p: "{{ OPNCC.path.config.compose }}/build_mongodb", o: 'root', g: "{{ OPNCC_USER }}"}
     - {p: "{{ OPNCC.path.config.compose }}/build_graylog", o: 'root', g: "{{ OPNCC_USER }}"}
+    # ide
+    - {p: "{{ OPNCC.path.data.ide }}", o: "{{ OPNCC.users.ide }}"}
+    - {p: "{{ OPNCC.path.config.ide }}", o: "{{ OPNCC.users.ide }}"}
+    # ansible
+    - {p: "{{ OPNCC.path.data.ansible }}", o: "{{ OPNCC.users.semaphore }}", g: "{{ OPNCC.users.ide }}", m: '0770'}
+    - {p: "{{ OPNCC.path.data.semaphore }}", o: "{{ OPNCC.users.semaphore }}"}
+    - {p: "{{ OPNCC.path.data.semaphore }}/db", o: "{{ OPNCC.users.semaphore }}"}
+    - {p: "{{ OPNCC.path.data.semaphore }}/run", o: "{{ OPNCC.users.semaphore }}"}
+    - {p: "{{ OPNCC.path.data.semaphore }}/.ssh", o: "{{ OPNCC.users.semaphore }}"}
+    - {p: "{{ OPNCC.path.config.semaphore }}", o: "{{ OPNCC.users.semaphore }}"}
+    - {p: "{{ OPNCC.path.config.compose }}/build_semaphore", o: 'root', g: "{{ OPNCC_USER }}"}
 
 - name: OPN-CC | Processing services
   ansible.builtin.import_tasks: services.yml

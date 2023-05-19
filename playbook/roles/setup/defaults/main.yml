@@ -1,5 +1,7 @@
 ---
 
+OPNCC_DNS_HOST: 'opncc-host'
+OPNCC_MAIL_BASE: "opn-cc@{{ OPNCC_VARS.mail_domain | default(OPNCC_VARS.domain, true) }}"
 OPNCC_PATH_BASE:
   config: '/etc/opn-cc'
   lib: '/var/local/lib/opn-cc'
@@ -13,10 +15,13 @@ OPNCC:
     graylog: 1102
     mongodb: 1103
     opensearch: 1104
+    ide: 1105
+    semaphore: 1106  # ansible
+
   port:
     gitea:
       web: 8001
-      ssh: 2201
+      ssh: 2222
     graylog:
       web: 8002
       syslog: 5514
@@ -24,18 +29,39 @@ OPNCC:
         api: 9200
         perf: 9600
         dashboard: 8003
+    ide: 8004
+    semaphore: 8005
+
   path:
     data:
       gitea: "{{ OPNCC_PATH_BASE.lib }}/vcs/gitea"
       graylog: "{{ OPNCC_PATH_BASE.lib }}/logserver/graylog"
       mongodb: "{{ OPNCC_PATH_BASE.lib }}/logserver/mongodb"
       opensearch: "{{ OPNCC_PATH_BASE.lib }}/logserver/opensearch"
+      ide: "{{ OPNCC_PATH_BASE.lib }}/ide"
+      semaphore: "{{ OPNCC_PATH_BASE.lib }}/semaphore"
+      ansible: "{{ OPNCC_PATH_BASE.lib }}/ansible"
     config:
       compose: "{{ OPNCC_PATH_BASE.config }}/docker-compose"
       gitea: "{{ OPNCC_PATH_BASE.config }}/vcs/gitea"
       graylog: "{{ OPNCC_PATH_BASE.config }}/logserver/graylog"
+      ide: "{{ OPNCC_PATH_BASE.config }}/ide"
+      semaphore: "{{ OPNCC_PATH_BASE.config }}/ansible/semaphore"
     bin:
       compose: '/usr/local/bin/docker-compose'
+
   network:
-    gitea: '192.168.69.0/28'
-    graylog: '192.168.69.16/28'
+    vcs: '192.168.69.0/28'
+    logserver: '192.168.69.16/28'
+    ide: '192.168.69.32/28'
+    ansible: '192.168.69.48/28'
+
+  docker:
+    extra_hosts:
+      - "{{ OPNCC_DNS_HOST }}:host-gateway"
+
+# if latest => pull current release from github
+OPN_VERSIONS_LATEST:
+  # gitea: "{{ 'go-gitea' | github_latest_release('gitea') if OPNCC_VERSIONS.gitea == 'latest' else OPNCC_VERSIONS.gitea }}"
+  semaphore: "{{ 'ansible-semaphore' | github_latest_release('semaphore') if OPNCC_VERSIONS.semaphore == 'latest' else OPNCC_VERSIONS.semaphore }}"
+  opensearch: "{{ 'opensearch-project' | github_latest_release('opensearch') if OPNCC_VERSIONS.logserver.opensearch == 'latest' else OPNCC_VERSIONS.logserver.opensearch }}"

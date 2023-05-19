@@ -1,0 +1,42 @@
+---
+
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+# see: https://github.com/ansible-semaphore/semaphore
+
+version: '3'
+
+networks:
+  ansible:
+    driver: 'bridge'
+    external: false
+    ipam:
+      driver: 'default'
+      config:
+      - subnet: '{{ OPNCC.network.ansible }}'
+
+services:
+  semaphore:
+    image: 'local/semaphore:{{ OPN_VERSIONS_LATEST.semaphore }}'
+    build:
+      context: '{{ OPNCC.path.config.compose }}/build_semaphore/'
+      dockerfile: '{{ OPNCC.path.config.compose }}/build_semaphore/deployment/docker/prod/Dockerfile'
+    container_name: 'ansible-semaphore'
+    user: '{{ OPNCC.users.semaphore }}:{{ OPNCC.users.semaphore }}'
+    extra_hosts: {{ OPNCC.docker.extra_hosts }}
+    restart: 'unless-stopped'
+    environment:
+      SEMAPHORE_VERSION: '{{ OPN_VERSIONS_LATEST.semaphore }}'
+      SEMAPHORE_DB_DIALECT: 'bolt'
+      SEMAPHORE_ADMIN_PASSWORD: "{{ 'OPN-CC-' + lookup('password', OPNCC.path.config.semaphore + '/admin.txt chars=ascii_letters,digits length=10') }}"
+      SEMAPHORE_ADMIN_NAME: 'OPNSense Control Center - Ansible Admin'
+      SEMAPHORE_ADMIN_EMAIL: '{{ OPNCC_VARS.admin_mail }}'
+      SEMAPHORE_ADMIN: 'admin'
+    volumes:
+      - '{{ OPNCC.path.config.semaphore }}:/etc/semaphore'
+      - '{{ OPNCC.path.data.semaphore }}:/home/semaphore'
+    ports:
+      - '127.0.0.1:{{ OPNCC.port.semaphore }}:3000'
+    networks:
+      - 'ansible'

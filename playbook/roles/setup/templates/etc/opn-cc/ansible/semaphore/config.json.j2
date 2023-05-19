@@ -1,0 +1,56 @@
+{
+  "bolt": {
+    "host": "/home/semaphore/db/semaphore.bolt"
+  },
+  "mysql": {
+    "host": "",
+    "user": "",
+    "pass": "",
+    "name": "",
+    "options": null
+  },
+  "postgres": {
+    "host": "",
+    "user": "",
+    "pass": "",
+    "name": "",
+    "options": null
+  },
+  "dialect": "bolt",
+  "port": "3000",
+  "interface": "",
+  "tmp_path": "/home/semaphore/run",
+  "cookie_hash": "{{ (lookup('password', OPNCC.path.config.semaphore + '/cookie_hash.txt chars=ascii_letters,digits length=32') | b64encode)[:32] }}",
+  "cookie_encryption": "{{ (lookup('password', OPNCC.path.config.semaphore + '/cookie_encryption.txt chars=ascii_letters,digits length=32') | b64encode)[:32] }}",
+  "access_key_encryption": "{{ (lookup('password', OPNCC.path.config.semaphore + '/access_key_encryption.txt chars=ascii_letters,digits length=32') | b64encode)[:32] }}",
+  "email_sender": "ansible-{{ OPNCC_MAIL_BASE }}",
+  "email_host": "{{ OPNCC_DNS_HOST }}",
+  "email_port": "25",
+  "email_username": "",
+  "email_password": "",
+  "web_host": "",
+  "ldap_binddn": "",
+  "ldap_bindpassword": "",
+  "ldap_server": "",
+  "ldap_searchdn": "",
+  "ldap_searchfilter": "",
+  "ldap_mappings": {
+    "dn": "",
+    "mail": "",
+    "uid": "",
+    "cn": ""
+  },
+  "telegram_chat": "",
+  "telegram_token": "",
+  "slack_url": "",
+  "max_parallel_tasks": 0,
+  "ssh_config_path": "{{ OPNCC.path.data.semaphore }}/.ssh/config",
+  "email_alert": true,
+  "email_secure": false,
+  "telegram_alert": false,
+  "slack_alert": false,
+  "ldap_enable": false,
+  "ldap_needtls": false,
+  "demo_mode": false,
+  "git_client": false
+}
