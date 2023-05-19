@@ -1,6 +1,7 @@
 ---
 
-- hosts: localhost
+- name: OPNSense Control Center - Setup
+  hosts: localhost
   connection: local
   become: true
   gather_facts: true
@@ -49,7 +50,9 @@
           - OPNCC_VARS.domain | valid_hostname
 
     - name: Pre-Check | Comparing active SSH port with configured one
-      ansible.builtin.shell: 'lsof -i -P -n | grep LISTEN | grep ssh'
+      ansible.builtin.shell: |
+        set -o pipefail
+        lsof -i -P -n | grep LISTEN | grep ssh
       register: pc_ssh
       failed_when: >
         pc_ssh.failed or
@@ -58,11 +61,11 @@
       when: OPNCC_MANAGE.nftables | bool
 
   roles:
-    - name: nftables
+    - role: nftables
       when: OPNCC_MANAGE.nftables | bool
       tags: [nftables, setup]
 
-    - name: ansibleguy.infra_docker_minimal
+    - role: ansibleguy.infra_docker_minimal
       vars:
         docker:
           compose:
@@ -75,8 +78,7 @@
           address_pool: "base={{ OPNCC_VARS.networks.docker_default }},size=28"
       tags: [docker, setup]
 
-    # NOTE: config just for testing purposes for now
-    - name: ansibleguy.infra_nginx
+    - role: ansibleguy.infra_nginx  # NOTE: config just for testing purposes for now
       vars:
         nginx:
           sites:
@@ -118,4 +120,4 @@
                 restrict_methods: false
       tags: [nginx, setup, services]
 
-    - setup
+    - role: setup

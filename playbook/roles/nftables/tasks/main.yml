@@ -86,12 +86,12 @@
                 - {of: 'br-*'}
 
                 # firewall management
-                - {raw: "ct state new tcp dport {{ OPNCC_VARS.port.firewalls | nftables_format_list }} log prefix \"NFTables OUT Firewalls \"" }
+                - {raw: "ct state new tcp dport {{ OPNCC_VARS.port.firewalls | nftables_format_list }} log prefix \"NFTables OUT Firewalls \""}
                 - {proto: 'tcp', port: "{{ OPNCC_VARS.port.firewalls }}"}
 
                 # system connections
                 #   NOTE: could be further restricted; but we might expect to be behind a network firewall
-                - {raw: "ct state new tcp dport { 80, 443, 123, 53, 853 } ip daddr != $private_ranges log prefix \"NFTables OUT PUBLIC \"" }
+                - {raw: "ct state new tcp dport { 80, 443, 123, 53, 853 } ip daddr != $private_ranges log prefix \"NFTables OUT PUBLIC \""}
                 - {proto: 'tcp', port: [80, 443], dest: '!= $private_ranges', comment: 'HTTP+S for Updates'}
                 - {proto: ['tcp', 'udp'], port: 123, comment: 'NTP'}
                 - {proto: 'tcp', port: [53, 853], comment: 'DNS'}
@@ -106,4 +106,3 @@
                 # todo: add nat rule for client-mgmt-network to wireguard-network
                 - {src: '$private_ranges', dest: '!= $private_ranges', masquerade: true}
                 - {src: "{{ OPNCC_VARS.networks.docker }}", dest: "{{ OPNCC_VARS.networks.docker }}", masquerade: true}
-

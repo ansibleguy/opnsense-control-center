@@ -50,7 +50,7 @@ Not yet in a usable state!
 
 ----
 
-## Topology
+## Services
 
 Services use docker-compose to manage docker containers.
 
