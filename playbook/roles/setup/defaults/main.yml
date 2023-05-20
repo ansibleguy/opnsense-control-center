@@ -3,13 +3,16 @@
 OPNCC_PATH_BASE:
   config: '/etc/opn-cc'
   lib: '/var/local/lib/opn-cc'
+  backup: '/var/backups/opn-cc'
 
 OPNCC_USER: 'opn-cc'
+OPNCC_DNS_HOST: 'opncc-host'
+OPNCC_MAIL_BASE: "opn-cc@{{ OPNCC_VARS.mail_domain | default(OPNCC_VARS.domain, true) }}"
 
 OPNCC:
   users:
     opn-cc: 1100  # used to run 'docker-compose'
-    gitea: 1101
+    gogs: 1101
     graylog: 1102
     mongodb: 1103
     opensearch: 1104
@@ -18,7 +21,7 @@ OPNCC:
 
   path:
     data:
-      gitea: "{{ OPNCC_PATH_BASE.lib }}/vcs/gitea"
+      gogs: "{{ OPNCC_PATH_BASE.lib }}/vcs/gogs"
       graylog: "{{ OPNCC_PATH_BASE.lib }}/logserver/graylog"
       mongodb: "{{ OPNCC_PATH_BASE.lib }}/logserver/mongodb"
       opensearch: "{{ OPNCC_PATH_BASE.lib }}/logserver/opensearch"
@@ -27,12 +30,14 @@ OPNCC:
       ansible: "{{ OPNCC_PATH_BASE.lib }}/ansible"
     config:
       compose: "{{ OPNCC_PATH_BASE.config }}/docker-compose"
-      gitea: "{{ OPNCC_PATH_BASE.config }}/vcs/gitea"
+      gogs: "{{ OPNCC_PATH_BASE.config }}/vcs/gogs"
       graylog: "{{ OPNCC_PATH_BASE.config }}/logserver/graylog"
       ide: "{{ OPNCC_PATH_BASE.config }}/ide"
       semaphore: "{{ OPNCC_PATH_BASE.config }}/ansible/semaphore"
     bin:
       compose: '/usr/local/bin/docker-compose'
+    backup:
+      gogs: "{{ OPNCC_PATH_BASE.backup }}/vcs/gogs"
 
   network:
     vcs: '192.168.69.0/28'

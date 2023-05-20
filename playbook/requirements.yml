@@ -9,4 +9,6 @@ roles:
 
 collections:
   - 'community.general'
+  - 'community.crypto'
+  - 'community.docker'
   - 'ansible.posix'

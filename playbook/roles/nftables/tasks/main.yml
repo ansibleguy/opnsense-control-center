@@ -54,6 +54,9 @@
                 # log forwarding
                 - {proto: ['tcp', 'udp'], port: "{{ OPNCC_VARS.port.graylog.syslog }}", comment: 'Syslog to Logserver', src: '$private_ranges'}
 
+                # containers/internal net to opn-cc-git
+                - {src: '$private_ranges', port: "{{ OPNCC_VARS.port.gogs.git }}", proto: 'tcp'}
+
             forward:
               hook: 'forward'
               policy: 'drop'
@@ -65,6 +68,9 @@
                 # access between containers
                 - {if: 'br-*', of: 'br-*'}
                 - {if: 'docker0', of: 'docker0'}
+
+                # containers to opn-cc-git
+                - {if: 'br-*', dest: '$private_ranges', port: "{{ OPNCC_VARS.port.gogs.git }}", proto: 'tcp'}
 
                 # container build
                 - {raw: "ct state new tcp dport { 80, 443, 123, 53, 853 } ip daddr != $private_ranges log prefix \"NFTables OUT PUBLIC \""}

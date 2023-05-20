@@ -1,0 +1,97 @@
+---
+
+- name: OPN-CC | Users | Adding groups
+  ansible.builtin.group:
+    name: "{{ item.key }}"
+    gid: "{{ item.value }}"
+  with_dict: "{{ OPNCC.users }}"
+
+- name: OPN-CC | Users | Adding service-users
+  ansible.builtin.user:
+    name: "{{ item.key }}"
+    comment: 'OPN-CC Service-User'
+    uid: "{{ item.value }}"
+    shell: '/bin/bash'
+  with_dict: "{{ OPNCC.users }}"
+
+- name: OPN-CC | Users | Git-Config
+  ansible.builtin.copy:
+    content: |
+      [pull]
+              rebase = true
+      [user]
+              email = {{ item }}-{{ OPNCC_MAIL_BASE }}
+              name = opncc.{{ item }}
+    dest: "/home/{{ item }}/.gitconfig"
+    owner: "{{ item }}"
+    group: "{{ item }}"
+    mode: 0640
+  loop: "{{ OPNCC.users.keys() }}"
+
+- name: OPN-CC | Users | SSH-Directory
+  ansible.builtin.file:
+    path: "/home/{{ item }}/.ssh"
+    state: directory
+    mode: 0750
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ OPNCC.users.keys() }}"
+
+- name: OPN-CC | Users | SSH-Config
+  ansible.builtin.copy:
+    content: |
+      Host {{ OPNCC_DNS_HOST }}
+        User git
+        IdentityFile ~/.ssh/id_ed25519
+        IdentitiesOnly yes
+        Port {{ OPNCC_VARS.port.gogs.git }}
+        StrictHostKeyChecking no
+    dest: "/home/{{ item }}/.ssh/config"
+    mode: 0640
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ OPNCC.users.keys() }}"
+
+- name: OPN-CC | Users | Generate SSH keys
+  community.crypto.openssh_keypair:
+    path: "/home/{{ item }}/.ssh/id_ed25519"
+    type: 'ed25519'
+    mode: 0400
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ OPNCC.users.keys() }}"
+
+- name: OPN-CC | Users | Root Git-Config
+  ansible.builtin.copy:
+    content: |
+      [pull]
+              rebase = true
+      [user]
+              email = admin-{{ OPNCC_MAIL_BASE }}
+              name = opncc.admin
+    dest: '/root/.gitconfig'
+    mode: 0644
+
+- name: OPN-CC | Users | Root SSH-Directory
+  ansible.builtin.file:
+    path: '/root/.ssh'
+    state: directory
+    mode: 0750
+
+- name: OPN-CC | Users | Root SSH-Config
+  ansible.builtin.copy:
+    content: |
+      Host {{ OPNCC_DNS_HOST }}
+        User git
+        IdentityFile ~/.ssh/id_ed25519
+        IdentitiesOnly yes
+        Port {{ OPNCC_VARS.port.gogs.git }}
+        StrictHostKeyChecking no
+    dest: '/root/.ssh/config'
+    mode: 0640
+
+- name: OPN-CC | Users | Generate Root SSH key
+  community.crypto.openssh_keypair:
+    path: '/root/.ssh/id_ed25519'
+    type: 'ed25519'
+    mode: 0400

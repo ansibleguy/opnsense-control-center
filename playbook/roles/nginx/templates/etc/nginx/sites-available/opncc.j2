@@ -66,9 +66,9 @@ server {
     access_log syslog:server=unix:/dev/log,tag=nginx_opncc_vcs,nohostname,severity=info combined;
     error_log  syslog:server=unix:/dev/log,tag=nginx_opncc_vcs,nohostname,severity=error;
 
-    rewrite ^ $request_uri;
-    rewrite ^/{{ OPNCC_VARS.url.vcs }}(/.*) $1 break;
-    proxy_pass http://127.0.0.1:{{ OPNCC_VARS.port.gitea.web }}$uri;
+    rewrite ^/{{ OPNCC_VARS.url.vcs }}/(.*) /$1 break;
+    rewrite ^/{{ OPNCC_VARS.url.vcs }}$ /$1 break;
+    proxy_pass http://127.0.0.1:{{ OPNCC_VARS.port.gogs.web }}$uri;
     proxy_set_header Host $http_host;
     proxy_set_header X-Forwarded-Host $host;
     proxy_set_header X-Forwarded-Server $host;
@@ -89,20 +89,8 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_set_header X-Real-IP $remote_addr;
   }
-  location /{{ OPNCC_VARS.url.opensearch_dashboard }}/ {
-    # todo: fix
-    access_log syslog:server=unix:/dev/log,tag=nginx_opncc_osdb,nohostname,severity=info combined;
-    error_log  syslog:server=unix:/dev/log,tag=nginx_opncc_osdb,nohostname,severity=error;
-
-    rewrite ^ $request_uri;
-    rewrite ^/{{ OPNCC_VARS.url.opensearch_dashboard }}(/.*) $1 break;
-    proxy_pass http://127.0.0.1:{{ OPNCC_VARS.port.graylog.opensearch.dashboard }}$uri;
-    proxy_set_header Host $http_host;
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Forwarded-Server $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Real-IP $remote_addr;
+  location /{{ OPNCC_VARS.url.ide }} {
+    return 301 https://$host/{{ OPNCC_VARS.url.ide }}/?folder={{ OPNCC_IDE.root }};
   }
   location /{{ OPNCC_VARS.url.ide }}/ {
     access_log syslog:server=unix:/dev/log,tag=nginx_opncc_ide,nohostname,severity=info combined;

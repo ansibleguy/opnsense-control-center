@@ -1,0 +1,51 @@
+---
+
+# manually/bot:
+#  create admin account 'admin_opncc'
+#  add password into /etc/opn-cc/vcs/gogs/admin.txt (chown gogs:gogs, chmod 640)
+
+# get token
+#  curl -i -XPOST -u admin_opncc:PASSWORD -H "Content-Type: application/json" http://127.0.0.1:8001/api/v1/users/admin_opncc/tokens -d '{"name": "setup"}'
+# add token as authorization header
+
+# create org
+#  POST http://127.0.0.1:8001/api/v1/admin/users/admin_opncc/orgs -d '{"username": "{{ OPNCC_VCS_ORG }}",
+#    "full_name": "OPNSense Control Center", "website": "https://github.com/ansibleguy/opnsense-control-center"}'
+# create repos
+#  POST http://127.0.0.1:8001/api/v1/org/{{ OPNCC_VCS_ORG }}/repos -d '{"name": "config", "description": "Configuration Repository"}
+#  POST http://127.0.0.1:8001/api/v1/org/{{ OPNCC_VCS_ORG }}/repos -d '{"name": "diff", "description": "Diff-Checker Repository"}'
+# create team
+#  POST http://127.0.0.1:8001/api/v1/admin/orgs/{{ OPNCC_VCS_ORG }}/teams -d
+#    '{"name": "services", "description": "OPNSense Control Center - Serviceusers", "permission": "write"}'
+
+# create users
+#  POST http://127.0.0.1:8001/api/v1/admin/users -d '{"username": "service_ansible", "email": "ansible@opncc.ansibleguy.net"}'
+#  POST http://127.0.0.1:8001/api/v1/admin/users -d '{"username": "service_ide", "email": "ide@opncc.ansibleguy.net"}'
+
+# add ssh-keys
+#  POST http://127.0.0.1:8001/api/v1/admin/users/admin_opncc/keys -d '{"title": "host-root",
+#    "key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIhDGRlav4xmcaoj0NEdZ57uG4wdRPpG30SX32t41qw3"}'
+#  POST http://127.0.0.1:8001/api/v1/admin/users/service_ide/keys -d
+#    '{"title": "ide", "key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDaz8C7ScI6Oim+qUXWPNFZXCWGC9tHLRLgM9+cKARmv"}'
+
+# add users to org (3=TEAMID)
+#  PUT http://127.0.0.1:8001/api/v1/admin/teams/3/members/service_ide
+
+# grant repo privileges
+#  PUT http://127.0.0.1:8001/api/v1/repos/{{ OPNCC_VCS_ORG }}/config/collaborators/service_ide -d '{"permission": "write"}'
+#  PUT http://127.0.0.1:8001/api/v1/repos/{{ OPNCC_VCS_ORG }}/diff/collaborators/service_ide -d '{"permission": "read"}'
+
+# create main branches on repos
+#  git config --global user.name opncc.admin
+#  git config --global user.email admin@opncc.ansibleguy.net
+#  git config --global pull.rebase true
+
+# per repo
+#  mkdir /tmp/repo_config
+#  cd /tmp/repo_config/
+#  git init
+#  echo 'placeholder' > .placeholder
+#  git add .placeholder
+#  git commit -m init
+#  git remote add origin git@opncc-host:opncc/config.git
+#  git push -u origin master

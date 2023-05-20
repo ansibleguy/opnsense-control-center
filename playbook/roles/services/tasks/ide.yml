@@ -1,0 +1,14 @@
+---
+
+- name: OPN-CC | Services | IDE | Starting
+  ansible.builtin.systemd:
+    name: 'opn-cc-ide.service'
+    state: started
+
+- name: OPN-CC | Services | IDE | Installing extensions
+  community.docker.docker_container_exec:
+    container: 'ide-codeserver'
+    command: "code-server --install-extension {{ item }}"
+  loop: "{{ OPNCC_IDE.extensions }}"
+  register: _ide_ext
+  changed_when: "'is already installed' not in _ide_ext.stdout"

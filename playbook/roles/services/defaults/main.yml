@@ -1,10 +1,21 @@
 ---
 
-OPNCC_DNS_HOST: 'opncc-host'
-OPNCC_MAIL_BASE: "opn-cc@{{ OPNCC_VARS.mail_domain | default(OPNCC_VARS.domain, true) }}"
+OPNCC_VCS_ORG: 'opncc'
 
 # if latest => pull current release from github
 OPN_VERSIONS_LATEST:
-  # gitea: "{{ 'go-gitea' | github_latest_release('gitea') if OPNCC_VERSIONS.gitea == 'latest' else OPNCC_VERSIONS.gitea }}"
+  # gogs: "{{ 'gogs' | github_latest_release('gogs') if OPNCC_VERSIONS.gogs == 'latest' else OPNCC_VERSIONS.gogs }}"
   semaphore: "{{ 'ansible-semaphore' | github_latest_release('semaphore') if OPNCC_VERSIONS.semaphore == 'latest' else OPNCC_VERSIONS.semaphore }}"
   opensearch: "{{ 'opensearch-project' | github_latest_release('opensearch') if OPNCC_VERSIONS.logserver.opensearch == 'latest' else OPNCC_VERSIONS.logserver.opensearch }}"
+
+OPNCC_IDE:
+  root: '/home/coder/main'
+  extensions:
+    - 'redhat.ansible'
+    - 'redhat.vscode-yaml'
+
+OPNCC_SERVICES:
+  - 'opn-cc-vcs'  # gogs
+  - 'opn-cc-log'  # logserver/graylog
+  - 'opn-cc-ide'  # code-server
+  - 'opn-cc-ansible'  # ansible/semaphore
