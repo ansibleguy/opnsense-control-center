@@ -25,18 +25,17 @@
         https: 443
         ssh: 22
         firewalls: [443, 22]  # ports that are in use for firewall http+s
-        gitea:
+        gogs:
           web: 8001
-          ssh: 2222
+          git: 2222
         graylog:
           web: 8002
           syslog: 5514
           opensearch:
             api: 9200
             perf: 9600
-            dashboard: 8003
-        ide: 8004
-        semaphore: 8005
+        ide: 8003
+        semaphore: 8004
 
       networks:
         # todo: check any src works if unset/empty
@@ -51,10 +50,9 @@
         logserver: 'log'
         ide: 'ide'
         vcs: 'vcs'
-        opensearch_dashboard: 'osdb'
 
     OPNCC_VERSIONS:
-      gitea: 'latest'  # vcs
+      gogs: 'latest'  # vcs
       logserver:
         graylog: '5.0'
         graylog_min: '5.0.7'

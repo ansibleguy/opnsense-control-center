@@ -10,7 +10,6 @@
     group: "{{ OPNCC_USER }}"
   with_items:
     - {n: 'opensearch', u: 'https://github.com/opensearch-project/docker-images/archive/refs/heads/main.zip'}
-    - {n: 'mongodb', u: 'https://github.com/docker-library/mongo/archive/refs/heads/master.zip'}
     - {n: 'graylog', u: "https://github.com/Graylog2/graylog-docker/archive/refs/heads/{{ OPNCC_VERSIONS.logserver.graylog }}.zip"}
 
 # NOTE: build-process expects git repo..
@@ -30,12 +29,6 @@
     regexp: "{{ item.s }}"
     replace: "{{ item.r }}"
   with_items:
-    - {p: 'mongodb/mongo-master/5.0/Dockerfile', s: ' 999 ', r: " {{ OPNCC.users.mongodb }} "}
-    - {p: 'mongodb/mongo-master/5.0/Dockerfile', s: '^ENV MONGO_VERSION.*$ ', r: "ENV MONGO_VERSION {{ OPNCC_VERSIONS.logserver.mongodb }}"}
-    - {p: 'mongodb/mongo-master/5.0/Dockerfile', s: ' keyserver.ubuntu.com ', r: ' hkp://keyserver.ubuntu.com:80 '}
-    - {p: 'mongodb/mongo-master/5.0/Dockerfile',
-       s: 'COPY docker-entrypoint\.sh \/usr\/local\/bin\/\nENTRYPOINT \["docker-entrypoint\.sh"\]',
-       r: 'COPY docker-entrypoint.sh /usr/local/bin/\nRUN chmod 775 /usr/local/bin/docker-entrypoint.sh\nENTRYPOINT ["docker-entrypoint.sh"]'}
     - {p: "graylog/graylog-docker-{{ OPNCC_VERSIONS.logserver.graylog }}/docker/oss/Dockerfile",
        s: 'COPY health_check\.sh \/\n\n',
        r: 'COPY health_check.sh /\nRUN chmod 775 /docker-entrypoint.sh\n\n'}
@@ -43,3 +36,13 @@
     - {p: 'semaphore/deployment/docker/prod/buildx.Dockerfile', s: ' 1001', r: " {{ OPNCC.users.semaphore }}"}
     - {p: 'semaphore/deployment/docker/prod/goss.yaml', s: 'uid: 1001', r: "uid: {{ OPNCC.users.semaphore }}"}
     - {p: 'semaphore/deployment/docker/prod/bin/install', s: ' 1001:', r: " {{ OPNCC.users.semaphore }}:"}
+
+- name: OPN-CC | Services | Build | Dockerfiles
+  ansible.builtin.template:
+    src: "templates/etc/opn-cc/docker-compose/{{ item }}.j2"
+    dest: "{{ OPNCC.path.config.compose }}/{{ item }}_dockerfile"
+    mode: 0640
+    owner: 'root'
+    group: "{{ OPNCC_USER }}"
+  loop:
+    - 'logserver_mongodb'

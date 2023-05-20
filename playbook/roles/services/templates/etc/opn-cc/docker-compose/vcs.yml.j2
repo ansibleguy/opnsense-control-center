@@ -3,7 +3,7 @@
 # {{ ansible_managed }}
 # ansibleguy: opnsense-control-center
 
-# see: https://docs.gitea.io/en-us/installation/install-with-docker-rootless/
+# see: https://hub.docker.com/r/gogs/gogs/
 
 version: '3'
 
@@ -16,24 +16,21 @@ networks:
       config:
       - subnet: '{{ OPNCC.network.vcs }}'
 
-
 services:
-  gitea:
-    image: 'gitea/gitea:{{ OPNCC_VERSIONS.gitea }}-rootless'
-    container_name: 'vcs-gitea'
+  gogs:
+    image: 'gogs/gogs:{{ OPNCC_VERSIONS.gogs }}'
+    container_name: 'vcs-gogs'
     environment:
-      USER_UID: {{ OPNCC.users.gitea }}
-      USER_GID: {{ OPNCC.users.gitea }}
-    user: '{{ OPNCC.users.gitea }}:{{ OPNCC.users.gitea }}'
+      PUID: {{ OPNCC.users.gogs }}
+      PGID: {{ OPNCC.users.gogs }}
     restart: 'on-failure'
     extra_hosts: {{ OPNCC.docker.extra_hosts }}
     networks:
       - 'vcs'
     volumes:
-      - '{{ OPNCC.path.data.gitea }}:/var/lib/gitea:rw'
-      - '{{ OPNCC.path.config.gitea }}:/etc/gitea:rw'
-      - '/etc/timezone:/etc/timezone:ro'
-      - '/etc/localtime:/etc/localtime:ro'
+      - '{{ OPNCC.path.data.gogs }}:/data:rw'
+      - '{{ OPNCC.path.config.gogs }}:/data/gogs/conf:rw'
+      - '{{ OPNCC.path.backup.gogs }}:/backup:rw'
     ports:
-      - '127.0.0.1:{{ OPNCC_VARS.port.gitea.web }}:3000'
-      - '127.0.0.1:{{ OPNCC_VARS.port.gitea.ssh }}:2222'
+      - '127.0.0.1:{{ OPNCC_VARS.port.gogs.web }}:3000'
+      - '{{ OPNCC_VARS.port.gogs.git }}:22'

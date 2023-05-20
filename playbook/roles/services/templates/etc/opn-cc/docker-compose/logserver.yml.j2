@@ -30,8 +30,6 @@ services:
     container_name: 'log-opensearch'
     user: '{{ OPNCC.users.opensearch }}:{{ OPNCC.users.opensearch }}'
     environment:
-      UID: {{ OPNCC.users.opensearch }}
-      GID: {{ OPNCC.users.opensearch }}
       OPENSEARCH_JAVA_OPTS: '-Xms1g -Xmx1g'
       bootstrap.memory_lock: true
       discovery.type: 'single-node'
@@ -58,14 +56,11 @@ services:
   mongodb:
     image: 'local/mongodb:{{ OPNCC_VERSIONS.logserver.mongodb }}'
     build:
-      context: '{{ OPNCC.path.config.compose }}/build_mongodb/mongo-master/5.0/'
-      dockerfile: '{{ OPNCC.path.config.compose }}/build_mongodb/mongo-master/5.0/Dockerfile'
+      context: .
+      dockerfile: '{{ OPNCC.path.config.compose }}/logserver_mongodb_dockerfile'
     container_name: 'log-mongodb'
     extra_hosts: {{ OPNCC.docker.extra_hosts }}
     user: '{{ OPNCC.users.mongodb }}:{{ OPNCC.users.mongodb }}'
-    environment:
-      UID: {{ OPNCC.users.mongodb }}
-      GID: {{ OPNCC.users.mongodb }}
     volumes:
       - '{{ OPNCC.path.data.mongodb }}:/data/db'
     restart: 'on-failure'
@@ -92,8 +87,6 @@ services:
         condition: 'service_started'
     entrypoint: '/usr/bin/tini -- wait-for-it opensearch:9200 --  /docker-entrypoint.sh'
     environment:
-      UID: {{ OPNCC.users.graylog }}
-      GID: {{ OPNCC.users.graylog }}
       GRAYLOG_NODE_ID_FILE: '/usr/share/graylog/data/config/node-id'
       GRAYLOG_HTTP_BIND_ADDRESS: '0.0.0.0:9000'
       GRAYLOG_HTTP_EXTERNAL_URI: 'http://localhost:9000/'
@@ -108,16 +101,5 @@ services:
       - '{{ OPNCC.path.data.graylog }}/journal:/usr/share/graylog/data/journal'
       - '{{ OPNCC.path.config.graylog }}:/usr/share/graylog/data/config'
     restart: 'on-failure'
-    networks:
-      - 'logserver'
-
-  opensearch-dashboard:  # todo: opt-in
-    image: 'opensearchproject/opensearch-dashboards:{{ OPNCC_VERSIONS.logserver.opensearch }}'
-    container_name: 'log-opensearch-dashboard'
-    extra_hosts: {{ OPNCC.docker.extra_hosts }}
-    ports:
-      - '127.0.0.1:{{ OPNCC_VARS.port.graylog.opensearch.dashboard }}:5601'
-    environment:
-      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
     networks:
       - 'logserver'

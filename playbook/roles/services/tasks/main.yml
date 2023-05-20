@@ -8,7 +8,7 @@
     owner: "{{ item.o }}"
     group: "{{ item.g | default(item.o) }}"
   with_items:
-    - {f: 'vcs/gitea/app.ini', o: "{{ OPNCC.users.gitea }}"}
+    - {f: 'vcs/gogs/app.ini', o: "{{ OPNCC.users.gogs }}"}
     - {f: 'logserver/graylog/log4j2.xml', o: "{{ OPNCC.users.graylog }}"}
     - {f: 'ide/config.yaml', o: "{{ OPNCC.users.ide }}"}
     - {f: 'logserver/graylog/graylog.conf', o: "{{ OPNCC.users.graylog }}", m: '0400'}
@@ -44,19 +44,27 @@
     mode: 0644
     owner: 'root'
     group: 'root'
-  loop:
-    - 'opn-cc-vcs'  # gitea
-    - 'opn-cc-log'  # logserver/graylog
-    - 'opn-cc-ide'  # code-server
-    - 'opn-cc-ansible'  # ansible/semaphore
+  loop: "{{ OPNCC_SERVICES }}"
 
 - name: OPN-CC | Services | Enabling services
   ansible.builtin.systemd:
     name: "{{ item }}.service"
     enabled: true
     daemon_reload: true
-  loop:
-    - 'opn-cc-vcs'
-    - 'opn-cc-log'
-    - 'opn-cc-ide'
-    - 'opn-cc-ansible'
+  loop: "{{ OPNCC_SERVICES }}"
+
+- name: OPN-CC | Services | Clearing build-cache
+  ansible.builtin.command:
+    cmd: 'docker builder prune'
+    stdin: 'y'
+  changed_when: false
+
+- name: OPN-CC | Services | IDE
+  ansible.builtin.import_tasks: ide.yml
+
+- name: OPN-CC | Services | Starting services (will take a while to finish at first run)
+  ansible.builtin.systemd:
+    name: "{{ item }}.service"
+    state: started
+    no_block: true
+  loop: "{{ OPNCC_SERVICES }}"

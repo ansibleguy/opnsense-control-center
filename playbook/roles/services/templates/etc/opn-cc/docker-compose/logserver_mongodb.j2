@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+FROM mongo:{{ OPNCC_VERSIONS.logserver.mongodb }}
+RUN groupmod --gid {{ OPNCC.users.mongodb }} mongodb; \
+	usermod --uid {{ OPNCC.users.mongodb }} mongodb; \
+	chown -R mongodb:mongodb /data/db /data/configdb

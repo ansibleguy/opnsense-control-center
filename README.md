@@ -32,7 +32,7 @@ Not yet in a usable state!
 
 * [Graylog for centralized logging incl. analysis and alerting](https://github.com/Graylog2/graylog2-server)
 
-* [Config and information versioning using git (with WebUI)](https://github.com/go-gitea/gitea)
+* [Config and information versioning using git (with WebUI)](https://github.com/gogs/gogs)
 
 * [Config management using Web IDE/Editor](https://github.com/coder/code-server)
 
@@ -68,7 +68,7 @@ Services use docker-compose to manage docker containers.
     │   ├── opensearchproject/opensearch
     │   └── opensearchproject/opensearch-dashboards  # opt-in
     └── opn-cc-vcs.service  # version control system
-        └── gitea/gitea
+        └── gogs/gogs
 ```
 
 ----
@@ -81,6 +81,7 @@ Services use docker-compose to manage docker containers.
 * Connection to CC
   * active - target has static IP that can be reached by CC
   * passive - target needs to start a vpn-tunnel (wireguard) for the management connection; CC needs to have a static IP
+    * vpn would also be good to have to enable us to use 'unencrypted' data-transfers like out-of-the-box syslog log-forwarding
   * optional: CC should have a client-network that allows proxied access to firewall webUI, ssh and so on (useful if passive connection is used)
 
 * Switches for..
