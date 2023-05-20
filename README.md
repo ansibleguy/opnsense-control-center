@@ -65,8 +65,7 @@ Services use docker-compose to manage docker containers.
     ├── opn-cc-log.service  # log server
     │   ├── graylog/graylog
     │   ├── mongo
-    │   ├── opensearchproject/opensearch
-    │   └── opensearchproject/opensearch-dashboards  # opt-in
+    │   └── opensearchproject/opensearch
     └── opn-cc-vcs.service  # version control system
         └── gogs/gogs
 ```
