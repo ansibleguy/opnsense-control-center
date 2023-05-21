@@ -1,5 +1,8 @@
 ---
 
+# todo: solution for seamless(er) handling users on different services (graylog, gogs, code-server(?), ...)
+# todo: add oauth2-proxy if OPNCC_AUTH.type == 'oauth2'
+
 - name: OPN-CC | Services | App Configs
   ansible.builtin.template:
     src: "templates/etc/opn-cc/{{ item.f }}.j2"

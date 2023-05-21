@@ -33,6 +33,7 @@ jobs:
           pip install -r requirements_lint.txt
         shell: bash
 
+      # todo: add py.j2 linting
       - name: Running PyLint
         run: pylint --recursive=y .
         shell: bash

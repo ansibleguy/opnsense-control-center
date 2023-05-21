@@ -14,6 +14,25 @@
       nftables: true
       logserver: true  # graylog/mongodb/opensearch stack
 
+    OPNCC_AUTH:  # todo: mfa
+      type: 'system'  # file,system,ldap,oauth2/totp
+      file: '/etc/opn-cc/users.txt'
+      system:
+        group: 'opncc_users'
+      ldap:
+        tls: true
+        server: ''
+        port: 636
+        ca: '/etc/opn-cc/ldap-ca.crt'
+        client_cert: '/etc/opn-cc/ldap-client.crt'
+        client_key: '/etc/opn-cc/ldap-client.key'
+        bind:
+          dn: ''
+          pwd: ''
+        filter: ''  # '(&(mail=%s)(objectClass=person)(memberOf:=CN=opncc,OU=Groups,DC=template,DC=ansibleguy,DC=net))'  # login with mail; must be in group 'opncc'
+      totp:
+        path: '/var/local/lib/opn-cc/totp/${USER}.key'
+
     OPNCC_VARS:
       domain: ''
       aliases: []
@@ -36,20 +55,27 @@
             perf: 9600
         ide: 8003
         semaphore: 8004
+        auth: 8010
+        oauth2_proxy: 8011
 
       networks:
+        opncc_prefix: '10.215'  # /16 will be used!
         # todo: check any src works if unset/empty
         allow_web: ['192.168.0.0/16', '172.16.0.0/12', '10.0.0.0/8']
         allow_ssh: ['192.168.0.0/16', '172.16.0.0/12', '10.0.0.0/8']
         deny: []
-        docker: '192.168.69.0/24'
-        docker_default: '192.168.69.240/28'
+        docker_prefix: '254'
+        docker: '0/24'  # opncc_prefix.docker_prefix.docker
+        docker_default: '240/28'  # opncc_prefix.docker_prefix.docker_default
+        vpn: '0.0/20'  # opncc_prefix.vpn ; 0.0-15.255; 4093 boxes
+        vpn_mgmt: '255.0/24'  # opncc_prefix.vpn_mgmt
       url:
         default: 'ide'
         ansible: 'ans'
         logserver: 'log'
         ide: 'ide'
         vcs: 'vcs'
+        auth: 'auth'
 
     OPNCC_VERSIONS:
       gogs: 'latest'  # vcs
@@ -67,6 +93,11 @@
         that:
           - OPNCC_VARS.domain | default(none, true) is not none
           - OPNCC_VARS.domain | valid_hostname
+
+    - name: Pre-Check | Authentication-type set and valid
+      ansible.builtin.assert:
+        that:
+          - OPNCC_AUTH.type in ['system', 'file', 'ldap', 'oauth2', 'totp']
 
     - name: Pre-Check | Comparing active SSH port with configured one
       ansible.builtin.shell: |
@@ -96,11 +127,18 @@
             bridge_none: false  # build-process
             disable_iptables: true
             reload: true
-          address_pool: "base={{ OPNCC_VARS.networks.docker_default }},size=28"
+          address_pool: "base={{ OPNCC_VARS.networks.opncc_prefix }}.{{ OPNCC_VARS.networks.docker_prefix }}.{{ OPNCC_VARS.networks.docker_default }},size=28"
       tags: [docker, setup]
+
+    - role: setup
+      vars:
+        setup_part: 1  # nginx role depends on some setup tasks
+      tags: [setup, services]
 
     - role: nginx
       tags: [nginx, setup, services]
 
     - role: setup
+      vars:
+        setup_part: 2
       tags: [setup, services]

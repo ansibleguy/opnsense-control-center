@@ -4,3 +4,8 @@
   ansible.builtin.systemd:
     name: 'nginx.service'
     state: restarted
+
+- name: Restart-auth
+  ansible.builtin.systemd:
+    name: 'opn-cc-auth.service'
+    state: restarted

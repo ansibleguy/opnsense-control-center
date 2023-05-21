@@ -1,0 +1,14 @@
+{% raw %}<html>
+  <body>
+    <h1>Login form:</h1>
+    <div>
+        <form action="/{{ LOCATION }}" method="POST">
+            <label for="u"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="u" required>
+            <label for="p"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="p" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+  </body>
+</html>{% endraw %}

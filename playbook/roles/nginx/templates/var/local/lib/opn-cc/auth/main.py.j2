@@ -1,0 +1,167 @@
+# flask application that acts as authentication service
+import flask
+from flask import Flask, request, render_template, redirect, Response
+from waitress import serve
+from time import time
+from hashlib import sha512
+
+from ldap import auth_ldap
+from file import auth_file
+from system import auth_system
+from totp import auth_totp
+
+app = Flask('OPN-CC-Auth')
+
+AUTH_TYPE = '{{ OPNCC_AUTH.type }}'
+AUTH_MAPPING = {
+    'system': auth_system,
+    'file': auth_file,
+    'ldap': auth_ldap,
+    'totp': auth_totp,
+}
+LOCATION = '{{ OPNCC_VARS.url.auth }}'
+FILE_SESSIONS = 'sessions.txt'
+SESSION_LIFETIME = 8 * 3600
+SEP = ','
+SALT = b"{{ lookup('password', OPNCC.path.data.auth + '/salt.txt chars=ascii_letters,digits length=50') }}"
+COOKIE_TOKEN = 'OPNCC-SESSION'
+COOKIE_USER = 'OPNCC-USER'
+ROOT_URL = 'https://{{ OPNCC_VARS.domain }}/'
+
+
+def _logon(user: str, token: str):
+    with open(FILE_SESSIONS, 'a+') as session:
+        session.write(f"{time()}{SEP}{user},{token}")
+
+
+def _build_session_token(user: str, password: str) -> tuple[str, float]:
+    token_time = time()
+    token = sha512(
+        user.encode('utf-8') + password.encode('utf-8') + SALT
+    ).hexdigest()
+
+    with open(FILE_SESSIONS, 'a+') as session:
+        session.write(f"{token_time}{SEP}{user},{token}\n")
+
+    return token, token_time
+
+
+def _existing_session(user: str, token: str) -> bool:
+    with open(FILE_SESSIONS, 'r') as session_file:
+        sessions = session_file.readlines()
+        sessions.reverse()
+
+        if len(sessions) > 1000:
+            print('WARNING: Many sessions in store!')
+
+        for s in sessions:
+            try:
+                s_time, s_user, s_token = s.split(SEP)
+                if s_user == user:
+                    if time() - float(s_time) > SESSION_LIFETIME:
+                        print(f"INFO: Session for user '{user}' expired!")
+                        break
+
+                    if token == s_token.strip():
+                        return True
+
+                    print(f"WARNING: Invalid session token for user '{user}!'")
+                    break
+
+            except (ValueError, TypeError):
+                print(f"WARNING: Got invalid session format in store: '{FILE_SESSIONS}'")
+                continue
+
+    return False
+
+
+def _authenticate(user: str, pwd: str) -> bool:
+    auth = AUTH_MAPPING[AUTH_TYPE](user=user, pwd=pwd)
+
+    if auth:
+        print(f"INFO: User '{user}' authenticated successfully.")
+
+    else:
+        print(f"WARNING: User '{user}' authentication failed.")
+
+    return auth
+
+
+def _has_valid_session() -> bool:
+    try:
+        user = request.cookies[COOKIE_USER]
+        token = request.cookies[COOKIE_TOKEN]
+
+        if _existing_session(user=user, token=token):
+            return True
+
+    except KeyError:
+        pass
+
+    return False
+
+
+@app.get(f"/{LOCATION}")
+def form():
+    if _has_valid_session():
+        return 'has session', 200
+
+    return render_template('login.html', LOCATION=LOCATION)
+
+
+@app.post(f"/{LOCATION}")
+def login():
+    if _has_valid_session():
+        return 'has session', 200
+
+    user, pwd = request.form['u'], request.form['p']
+
+    if _authenticate(user=user, pwd=pwd):
+        response = Response(status=200)
+        token, token_time = _build_session_token(user=user, password=pwd)
+        response.set_cookie(
+            key=COOKIE_TOKEN,
+            value=token,
+            expires=token_time + SESSION_LIFETIME,
+        )
+        response.set_cookie(
+            key=COOKIE_USER,
+            value=user,
+        )
+        return response
+
+    return 'nope', 401
+
+
+@app.post(f"/{LOCATION}/cleanup")
+def cleanup():
+    print('INFO: Starting session cleanup')
+
+    with open(FILE_SESSIONS, 'w+') as session_file:
+        timeout_idx = 0
+        sessions = session_file.readlines()
+
+        for idx, s in enumerate(sessions):
+            try:
+                s_time, _ = s.split(SEP, 1)
+                if time() - float(s_time) < SESSION_LIFETIME:
+                    timeout_idx = idx
+
+            except (ValueError, TypeError):
+                print(f"WARNING: Got invalid session format in store: '{FILE_SESSIONS}'")
+                continue
+
+        session_file.writelines(sessions[timeout_idx:])
+        print(f'INFO: Cleaned-up {timeout_idx} sessions')
+
+    return '', 200
+
+
+@app.route('/<path:path>')
+def catch_all(path):
+    del path
+    return redirect(ROOT_URL)
+
+
+if __name__ == '__main__':
+    serve(app, host='127.0.0.1', port=int('{{ OPNCC_VARS.port.auth }}'))

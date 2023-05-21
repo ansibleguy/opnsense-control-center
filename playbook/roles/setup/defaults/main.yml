@@ -18,6 +18,7 @@ OPNCC:
     opensearch: 1104
     ide: 1105
     semaphore: 1106  # ansible
+    auth: 1107
 
   path:
     data:
@@ -28,6 +29,8 @@ OPNCC:
       ide: "{{ OPNCC_PATH_BASE.lib }}/ide"
       semaphore: "{{ OPNCC_PATH_BASE.lib }}/semaphore"
       ansible: "{{ OPNCC_PATH_BASE.lib }}/ansible"
+      web: "{{ OPNCC_PATH_BASE.lib }}/web"
+      auth: "{{ OPNCC_PATH_BASE.lib }}/auth"
     config:
       compose: "{{ OPNCC_PATH_BASE.config }}/docker-compose"
       gogs: "{{ OPNCC_PATH_BASE.config }}/vcs/gogs"
@@ -40,10 +43,10 @@ OPNCC:
       gogs: "{{ OPNCC_PATH_BASE.backup }}/vcs/gogs"
 
   network:
-    vcs: '192.168.69.0/28'
-    logserver: '192.168.69.16/28'
-    ide: '192.168.69.32/28'
-    ansible: '192.168.69.48/28'
+    vcs: "{{ OPNCC_VARS.networks.opncc_prefix }}.{{ OPNCC_VARS.networks.docker_prefix }}.0/28"
+    logserver: "{{ OPNCC_VARS.networks.opncc_prefix }}.{{ OPNCC_VARS.networks.docker_prefix }}.16/28"
+    ide: "{{ OPNCC_VARS.networks.opncc_prefix }}.{{ OPNCC_VARS.networks.docker_prefix }}.32/28"
+    ansible: "{{ OPNCC_VARS.networks.opncc_prefix }}.{{ OPNCC_VARS.networks.docker_prefix }}.48/28"
 
   docker:
     extra_hosts:

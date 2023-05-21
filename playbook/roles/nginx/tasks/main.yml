@@ -1,5 +1,9 @@
 ---
 
+# todo: authentication
+#   basic-auth support for: ldap, totp, system-auth, ...
+#   set aes256(username, serversecret) as http header
+
 - name: OPN-CC | Nginx | Creating certificate
   ansible.builtin.include_role:
     name: ansibleguy.infra_certs
@@ -50,3 +54,7 @@
   loop:
     - 'status'
     - 'opncc'
+
+- name: OPN-CC | Nginx | Local Auth
+  ansible.builtin.import_tasks: auth.yml
+  when: OPNCC_AUTH.type != 'oauth2'
