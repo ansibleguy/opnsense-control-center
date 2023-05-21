@@ -18,6 +18,13 @@ Feel free to..
 * [file issues](https://github.com/ansibleguy/opnsense-control-center/issues)
 * [contribute by creating pull-requests](https://github.com/ansibleguy/opnsense-control-center/pulls)
 
+### Web Development
+
+**PLEASE**: The project currently is lacking Web-Frontend experience.
+
+If you are interested to contribute some of your time => reach out to [guy@ansibleguy.net](mailto:guy@ansibleguy.net)
+
+
 ### DEVELOPMENT IN PROGRESS!
 
 Not yet in a usable state!
@@ -36,10 +43,10 @@ Not yet in a usable state!
 
 * [Config management using Web IDE/Editor](https://github.com/coder/code-server)
 
-* custom [Django-based WebUI](https://github.com/django/django) to..
+* [OAuth Proxy if you want to use you IDP](https://github.com/oauth2-proxy/oauth2-proxy)
+
+* custom WebUI to
   * manage configuration
-  * get an status overview
-  * see last config changes
 
 * management service
   * checking firewalls for config changes => history using VCS
@@ -92,7 +99,7 @@ Services use docker-compose to manage docker containers.
   * switches for different types
   * like opnsense widgets
     * firmware version
-    * response time
+    * response time/latency
     * hardware
     * online status (ping, tcp check on webUI and optional any custom port)
     * service status

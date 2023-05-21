@@ -1,0 +1,27 @@
+---
+
+# generate ansible-config from opncc-config
+#   if set to false you will have to manage your ansible-config manually
+config_to_ansible: true
+
+# use vpn-server for boxes to connect to
+vpn: true
+vpn_cidr: "{{ OPNCC_VARS.networks.opncc_prefix }}.{{ OPNCC_VARS.networks.vpn }}"
+
+# use client-vpn network for proxied management
+#   only if vpn=true
+vpn_mgmt_net: true
+vpn_mgmt_net_cidr: "{{ OPNCC_VARS.networks.opncc_prefix }}.{{ OPNCC_VARS.networks.vpn_mgmt }}"
+
+
+# add log forwarding to firewalls
+syslog: true
+
+# only use log forwarding if vpn is used
+#   if no vpn is used the logs will be sent in plaintext over the internet..
+#   that can be a security risk and is NOT RECOMMENDED!
+#   NOTE: once syslog over tls is implemented in OPNSense we could use that.
+#     There is a manual way of doing that - but I don't like adding non-opnsense-managed config to the systems..
+#     see: https://forum.opnsense.org/index.php?topic=16144.0
+syslog_only_vpn: true
+

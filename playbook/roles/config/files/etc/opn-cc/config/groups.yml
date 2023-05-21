@@ -1,0 +1,9 @@
+---
+
+# groups that can be used for config- and provisioning-scopes
+
+- name: 'nickname'
+  members: ['fw1', 'fw2']
+
+- name: 'nickname2'
+  members: ['fw3', 'fw1']

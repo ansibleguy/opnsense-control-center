@@ -78,6 +78,8 @@
     state: directory
     mode: 0750
 
+# todo: ssh-, git-config & ssh-keys not needed for all of them
+
 - name: OPN-CC | Users | Root SSH-Config
   ansible.builtin.copy:
     content: |

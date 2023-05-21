@@ -1,0 +1,16 @@
+---
+
+- name: 'nickname'
+  target: 'dns/ip'
+  vpn: false  # if connected via vpn
+  api:
+    port: 443
+    key: ''
+    secret: ''  # todo: warn if no ansible-vault
+  ssh:
+    port: 22
+    user: 'opncc'
+    key: ''  # todo: warn if no ansible-vault
+    pwd: ''  # todo: warn if no ansible-vault
+  overrides:  # override global defaults
+    syslog:

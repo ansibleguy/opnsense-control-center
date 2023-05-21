@@ -1,0 +1,24 @@
+language should probably be JS
+
+log any config changes to syslog
+- user set from authentication as X-User header (by nginx)
+
+basic components:
+- configuration pages
+  - load config-files (YAML) from /etc/opn-cc/config
+  - parse to/from forms
+  - update YAML files on config change
+  - firewall-config might be challenging
+    - multiple services on dynamic scopes (all/groups/hosts)
+
+- status pages
+  - check config
+    - opt-in/-out
+    - storage period/history (days)
+    - checkin intervals (sec)
+  - PUSH STATI TO SYSLOG AND USE GRAYLOG INSTEAD:
+    - see current stati
+    - history view (with graphs?)
+
+- see last config changes
+  - USE VCS WebUI instead

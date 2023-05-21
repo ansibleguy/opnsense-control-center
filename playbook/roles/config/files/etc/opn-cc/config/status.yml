@@ -1,0 +1,90 @@
+---
+
+# what status-check should be performed and saved
+
+# todo: option to enable packet capture: https://docs.opnsense.org/development/api/core/diagnostics.html#id9
+
+checks:
+  firmware: true
+  latency: true
+  hardware: true
+  services: true  # api/core/service/search
+  processes: false  # api/diagnostics/activity/getActivity
+  health: true  # api/diagnostics/systemhealth/getRRDlist
+  online:
+    ping: true
+    # check if port is listening
+    web: true
+    ssh: true
+  resources:  # widgets/api/get.php?load=system,interfaces
+    cpu: true
+    ram: true
+    disk: true
+    traffic: false  # or # api/diagnostics/traffic/Interface
+  firewall:
+    stats: true  # api/diagnostics/firewall/stats
+    # alternative if syslog log-forwarding is not possible/wanted
+    logs: false  # api/diagnostics/firewall/log
+  network:
+    gateways: true  # api/routes/gateway/status
+    int_config: false  # api/diagnostics/interface/getInterfaceConfig
+    int_stats: false  # api/diagnostics/interface/getInterfaceStatistics
+    routes: true  # api/diagnostics/interface/getRoutes
+    sockets: false  # api/diagnostics/interface/getSocketStatistics
+    vip: true  # api/diagnostics/interface/getVipStatus
+
+
+interval:  # seconds
+  default: 10
+
+  firmware: 300
+  latency: 5
+  hardware: 1800
+  services: 5
+  processes: 60
+  online:
+    ping: 5
+  resources:  # widgets/api/get.php?load=system,interfaces
+    cpu: 5
+    ram: 5
+    disk: 60
+    traffic: 5
+  firewall:
+    logs: 5
+  network:
+    int_config: 60
+    sockets: 60
+
+
+# todo: use mongodb auto-cleanup 'expireAfterSeconds'
+history:  # days
+  default: 30
+
+  processes: 7
+  resources:
+    traffic: 7
+  firewall:
+    stats: 3
+    logs: 14  # lots of data
+  network:
+    int_stats: 7
+    sockets: 7
+
+# conditions on when to save current status to db
+#  on-change => -diskspace, +cpu, -i, +o
+history_save:
+  default: 'on-change'
+
+  latency: 'always'
+  processes: 'always'
+  resources:
+    cpu: 'always'
+    ram: 'always'
+    disk: true
+    traffic: 'always'
+  firewall:
+    stats: 'always'
+    logs: 'always'
+  network:
+    int_stats: 'always'
+    sockets: 'always'
