@@ -3,6 +3,7 @@
 
 [Unit]
 Description=OPNSense Control Center - Authentication Service
+ConditionPathExists={{ OPNCC_NGINX_AUTH.session.db }}
 
 [Service]
 Type=simple

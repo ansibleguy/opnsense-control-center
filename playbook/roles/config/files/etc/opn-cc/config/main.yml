@@ -24,4 +24,3 @@ syslog: true
 #     There is a manual way of doing that - but I don't like adding non-opnsense-managed config to the systems..
 #     see: https://forum.opnsense.org/index.php?topic=16144.0
 syslog_only_vpn: true
-

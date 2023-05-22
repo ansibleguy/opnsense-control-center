@@ -111,4 +111,5 @@
               rules:
                 # todo: add nat rule for client-mgmt-network to wireguard-network
                 - {src: '$private_ranges', dest: '!= $private_ranges', masquerade: true}
-                - {src: "{{ OPNCC_VARS.networks.opncc_prefix }}.{{ OPNCC_VARS.networks.docker_prefix }}.{{ OPNCC_VARS.networks.docker }}", dest: "{{ OPNCC_VARS.networks.docker }}", masquerade: true}
+                - {src: "{{ OPNCC_VARS.networks.opncc_prefix }}.{{ OPNCC_VARS.networks.docker_prefix }}.{{ OPNCC_VARS.networks.docker }}",
+                   dest: "{{ OPNCC_VARS.networks.docker }}", masquerade: true}

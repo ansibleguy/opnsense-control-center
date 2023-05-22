@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+DEBUG = False
+
+AUTH_TYPE = '{{ OPNCC_AUTH.type }}'
+SALT = b"{{ lookup('password', OPNCC.path.data.auth + '/salt.txt chars=ascii_letters,digits length=50') }}"
+
+PORT = int('{{ OPNCC_VARS.port.auth }}')
+LOCATION = '{{ OPNCC_VARS.url.auth }}'
+ORIGIN_HEADER = 'HTTP_X_AUTH_REQUEST_REDIRECT'
+MAIL_DOMAIN = '{{ OPNCC_VARS.mail_domain | default('') }}'
+
+SESSION_DB = '{{ OPNCC_NGINX_AUTH.session.db }}'
+SESSION_DB_TABLE = '{{ OPNCC_NGINX_AUTH.session.table }}'
+SESSION_LIFETIME = int('{{ OPNCC_NGINX_AUTH.session.lifetime_hours }}') * 3600
+COOKIE_SESSION = '{{ OPNCC_NGINX_AUTH.session.cookie.session }}'
+COOKIE_USER = '{{ OPNCC_NGINX_AUTH.session.cookie.user }}'

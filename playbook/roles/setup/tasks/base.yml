@@ -58,6 +58,6 @@
     - {p: "{{ OPNCC.path.config.compose }}/build_semaphore", o: 'root', g: "{{ OPNCC_USER }}"}
     # web
     - {p: "{{ OPNCC.path.data.web }}", o: 'root', g: 'www-data'}
-    - {p: "{{ OPNCC.path.data.auth }}", o: 'root', g: "{{ OPNCC.users.auth }}"}
+    - {p: "{{ OPNCC.path.data.auth }}", o: 'root', g: "{{ OPNCC.users.auth }}", m: '0770'}
     - {p: "{{ OPNCC.path.data.auth }}/templates", o: 'root', g: "{{ OPNCC.users.auth }}"}
     - {p: "{{ OPNCC.path.data.auth }}/venv", o: 'root', g: "{{ OPNCC.users.auth }}"}

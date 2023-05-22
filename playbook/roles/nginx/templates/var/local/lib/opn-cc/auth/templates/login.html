@@ -1,8 +1,8 @@
-{% raw %}<html>
+<html>
   <body>
     <h1>Login form:</h1>
     <div>
-        <form action="/{{ LOCATION }}" method="POST">
+        <form action="/{{ LOCATION }}/login" method="POST">
             <label for="u"><b>Username</b></label>
             <input type="text" placeholder="Enter Username" name="u" required>
             <label for="p"><b>Password</b></label>
@@ -11,4 +11,4 @@
         </form>
     </div>
   </body>
-</html>{% endraw %}
+</html>

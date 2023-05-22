@@ -10,3 +10,6 @@ skip_list:
   - 'yaml'
   - '204'  # line length => checked by yamllint
   - 'args[module]'
+
+exclude_paths:
+  - '*.png'

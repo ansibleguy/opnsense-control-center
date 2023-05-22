@@ -1,6 +1,6 @@
 ---
 
-- name: OPN-CC | Nginx | Auth | Copying public web-files
+- name: OPN-CC | Nginx | Auth | Copying public web-files (1/2)
   ansible.builtin.template:
     src: "templates/var/local/lib/opn-cc/web/{{ item }}.j2"
     dest: "{{ OPNCC.path.data.web }}/{{ item }}"
@@ -9,6 +9,16 @@
     group: 'www-data'
   loop:
     - '401.html'
+
+- name: OPN-CC | Nginx | Auth | Copying public web-files (2/2)
+  ansible.builtin.copy:
+    src: "templates/var/local/lib/opn-cc/web/{{ item }}"
+    dest: "{{ OPNCC.path.data.web }}/{{ item }}"
+    mode: 0640
+    owner: 'root'
+    group: 'www-data'
+  loop:
+    - 'favicon.png'
 
 - name: OPN-CC | Nginx | Auth | Copying Authentication-service files
   ansible.builtin.template:
@@ -19,12 +29,30 @@
     group: "{{ OPNCC.users.auth }}"
   notify: Restart-auth
   loop:
+    - 'config.py'
+
+- name: OPN-CC | Nginx | Auth | Copying Authentication-service files (2/2)
+  ansible.builtin.copy:
+    src: "templates/var/local/lib/opn-cc/auth/{{ item }}"
+    dest: "{{ OPNCC.path.data.auth }}/{{ item }}"
+    mode: 0650
+    owner: 'root'
+    group: "{{ OPNCC.users.auth }}"
+  notify: Restart-auth
+  loop:
     - 'main.py'
+    - 'session.py'
+    - 'util.py'
     - 'ldap.py'
     - 'totp.py'
     - 'file.py'
     - 'system.py'
     - 'templates/login.html'
+
+- name: OPN-CC | Nginx | Auth | Installing SQLite3
+  ansible.builtin.apt:
+    name: 'sqlite3'
+    state: present
 
 - name: OPN-CC | Nginx | Auth | Installing python3-virtualenv
   ansible.builtin.pip:
@@ -33,18 +61,29 @@
 
 - name: OPN-CC | Nginx | Auth | Installing python3 modules into venv
   ansible.builtin.pip:
-    name: ['flask', 'waitress', 'ldap3', 'python-pam']
+    name: ['flask', 'waitress', 'db-sqlite3', 'ldap3', 'python-pam']
     virtualenv: "{{ OPNCC.path.data.auth }}/venv"
     state: present
   notify: Restart-auth
 
-- name: OPN-CC | Nginx | Auth | Session file
+- name: OPN-CC | Nginx | Auth | Session Database (sqlite)
+  ansible.builtin.command: "sqlite3 -line {{ OPNCC_NGINX_AUTH.session.db }}
+  'CREATE TABLE {{ OPNCC_NGINX_AUTH.session.table }} (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  time REAL,
+  user TEXT,
+  token TEXT
+  );'"
+  args:
+    creates: "{{ OPNCC_NGINX_AUTH.session.db }}"
+
+- name: OPN-CC | Nginx | Auth | Session Database privileges
   ansible.builtin.file:
     state: touch
     access_time: preserve
     modification_time: preserve
-    path: "{{ OPNCC.path.data.auth }}/sessions.txt"
-    mode: 0600
+    path: "{{ OPNCC_NGINX_AUTH.session.db }}"
+    mode: 0640
     owner: "{{ OPNCC.users.auth }}"
     group: "{{ OPNCC.users.auth }}"
 
