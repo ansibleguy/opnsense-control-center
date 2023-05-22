@@ -1,6 +1,10 @@
 ---
 
 OPNCC_NGINX_AUTH:
+  login_rate_limit:
+    sec: 1
+    min: 10
+
   session:
     db: "{{ OPNCC.path.data.auth }}/sessions.db"
     table: 'sessions'

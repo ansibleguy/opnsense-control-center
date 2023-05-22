@@ -1,6 +1,10 @@
 # {{ ansible_managed }}
 # ansibleguy: opnsense-control-center
 
+limit_req_zone $binary_remote_addr zone=login_sec:20m rate={{ OPNCC_NGINX_AUTH.login_rate_limit.sec }}r/s;
+limit_req_zone $binary_remote_addr zone=login_min:40m rate={{ OPNCC_NGINX_AUTH.login_rate_limit.min }}r/m;
+limit_req_status 429;
+
 server {
   listen 80;
   listen [::]:80;
@@ -231,6 +235,8 @@ server {
   location /{{ OPNCC_VARS.url.auth }}/login {
     access_log syslog:server=unix:/dev/log,tag=nginx_opncc_auth_login,nohostname,severity=info combined;
     error_log  syslog:server=unix:/dev/log,tag=nginx_opncc_auth_login,nohostname,severity=error;
+    limit_req zone=login_sec;
+    limit_req zone=login_min;
     proxy_pass http://127.0.0.1:{{ OPNCC_VARS.port.auth }};
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
