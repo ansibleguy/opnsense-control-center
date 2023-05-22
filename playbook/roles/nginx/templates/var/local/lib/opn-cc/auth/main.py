@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import flask
+
 # {{ ansible_managed }}
 # ansibleguy: opnsense-control-center
 # flask application that acts as authentication service
@@ -11,10 +11,10 @@ from config import PORT, AUTH_TYPE, LOCATION, ORIGIN_HEADER, MAIL_DOMAIN, \
     SESSION_LIFETIME, COOKIE_SESSION, COOKIE_USER
 from session import has_valid_session, remove_expired_sessions, create_session
 from util import debug
-from ldap import auth_ldap
-from file import auth_file
-from system import auth_system
-from totp import auth_totp
+from type_ldap import auth_ldap
+from type_file import auth_file
+from type_system import auth_system
+from type_totp import auth_totp
 
 app = Flask('OPN-CC-Auth')
 
@@ -26,11 +26,11 @@ AUTH_MAPPING = {
 }
 
 
-def _authenticate(user: str, pwd: str) -> bool:
-    auth = AUTH_MAPPING[AUTH_TYPE](user=user, pwd=pwd)
+def _authenticate(user: str, secret: str) -> bool:
+    auth = AUTH_MAPPING[AUTH_TYPE](user=user, secret=secret)
 
     if auth:
-        print(f"INFO: User '{user}' authenticated successfully.")
+        print(f"INFO: User '{user}' authentication successful.")
 
     else:
         print(f"WARNING: User '{user}' authentication failed.")
@@ -38,7 +38,7 @@ def _authenticate(user: str, pwd: str) -> bool:
     return auth
 
 
-def _redirect_origin() -> flask.Response:
+def _redirect_origin() -> Response:
     origin = '/' if ORIGIN_HEADER not in request.headers else request.headers[ORIGIN_HEADER]
     return redirect(f"https://{request.headers['HOST']}{origin}")
 
@@ -59,14 +59,11 @@ def form():
 @app.post(f"/{LOCATION}/login")
 def login():
     debug(loc=f"{LOCATION}/login", msg=f"REQUEST | {request.__dict__}")
-    user, pwd = request.form['u'], request.form['p']
+    user, secret = request.form['u'], request.form['p']
 
-    if _authenticate(user=user, pwd=pwd):
+    if _authenticate(user=user, secret=secret):
         response = _redirect_origin()
-        token, session_time = create_session(
-            user=user,
-            password=pwd,
-        )
+        token, session_time = create_session(user)
         response.set_cookie(
             key=COOKIE_SESSION,
             value=token,

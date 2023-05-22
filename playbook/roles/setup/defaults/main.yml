@@ -37,6 +37,7 @@ OPNCC:
       graylog: "{{ OPNCC_PATH_BASE.config }}/logserver/graylog"
       ide: "{{ OPNCC_PATH_BASE.config }}/ide"
       semaphore: "{{ OPNCC_PATH_BASE.config }}/ansible/semaphore"
+      auth: "{{ OPNCC_PATH_BASE.config }}/auth"
     bin:
       compose: '/usr/local/bin/docker-compose'
     backup:

@@ -1,6 +1,10 @@
 from config import DEBUG
 
 
-def debug(loc: str, msg: str):
+def debug(msg: str, loc: str = None):
     if DEBUG:
-        print(f'DEBUG: /{loc} | {msg}')
+        if loc is not None:
+            print(f'DEBUG: /{loc} | {msg}')
+
+        else:
+            print(f'DEBUG: {msg}')

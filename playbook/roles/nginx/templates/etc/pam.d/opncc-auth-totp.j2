@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+auth required pam_google_authenticator.so debug user={{ OPNCC.users.auth }} secret={{ OPNCC.path.config.auth }}/totp/${USER}.key allowed_perm=0600 no_strict_owner
+
+{# workaround for non system-users #}
+account required pam_permit.so

@@ -27,3 +27,7 @@ OPNCC_NGINX_AUTH:
     oauth2:
       - 'auth_request /oauth2/auth'
       - 'error_page 401 = /oauth2/start'
+
+  pam_file:
+    system: 'opncc-auth-system'
+    totp: 'opncc-auth-totp'

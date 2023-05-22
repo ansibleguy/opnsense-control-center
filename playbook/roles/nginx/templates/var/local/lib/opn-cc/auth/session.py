@@ -2,17 +2,19 @@
 # ansibleguy: opnsense-control-center
 
 from time import time
-from hashlib import sha512
+from random import choice as random_choice
+from string import ascii_letters, digits
 
 import sqlite3
 from flask import request
 
-from config import SALT, SESSION_DB, SESSION_DB_TABLE, SESSION_LIFETIME, COOKIE_SESSION, COOKIE_USER
+from config import SESSION_DB, SESSION_DB_TABLE, SESSION_LIFETIME, COOKIE_SESSION, COOKIE_USER
 from util import debug
 
 
 class SessionDB(object):
     def __init__(self):
+        # todo: try to open connection in global flask context so we don't have to do it on every request
         self.connection = sqlite3.connect(SESSION_DB)
         self.connection.row_factory = sqlite3.Row
 
@@ -49,11 +51,9 @@ def _save_session(session_db: sqlite3.Connection, session_time: float, user: str
     session_db.commit()
 
 
-def create_session(user: str, password: str) -> tuple[str, float]:
+def create_session(user: str) -> tuple[str, float]:
     session_time = time()
-    token = sha512(
-        user.encode('utf-8') + password.encode('utf-8') + SALT
-    ).hexdigest()
+    token = ''.join([random_choice(ascii_letters + digits) for _ in range(50)])
     with SessionDB() as session_db:
         _save_session(
             session_db=session_db,
@@ -67,7 +67,7 @@ def create_session(user: str, password: str) -> tuple[str, float]:
 
 def _valid_session(session_db: sqlite3.Connection, user: str, token: str) -> bool:
     sessions = _get_sessions(session_db)
-    debug(loc='?', msg=f'Session count: {len(sessions)}')
+    debug(msg=f'Session count: {len(sessions)}')
 
     if len(sessions) > 1000:
         print('WARNING: Many sessions in store!')

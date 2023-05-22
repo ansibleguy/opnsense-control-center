@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+# ansibleguy: opnsense-control-center
+
+auth [user_unknown=ignore success=ok ignore=ignore default=bad] pam_securetty.so
+auth        optional    pam_faildelay.so delay=3000000
+@include    common-auth
+@include    common-account
+@include    common-password

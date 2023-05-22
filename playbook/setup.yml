@@ -14,8 +14,8 @@
       nftables: true
       logserver: true  # graylog/mongodb/opensearch stack
 
-    OPNCC_AUTH:  # todo: mfa
-      type: 'system'  # file,system,ldap,oauth2/totp
+    OPNCC_AUTH:  # todo: MFA
+      type: 'system'  # system,ldap,oauth2/totp
       file: '/etc/opn-cc/users.txt'
       system:
         group: 'opncc_users'
@@ -31,7 +31,7 @@
           pwd: ''
         filter: ''  # '(&(mail=%s)(objectClass=person)(memberOf:=CN=opncc,OU=Groups,DC=template,DC=ansibleguy,DC=net))'  # login with mail; must be in group 'opncc'
       totp:
-        path: '/var/local/lib/opn-cc/totp/${USER}.key'
+        path: '/etc/opn-cc/auth/totp/${USER}.key'
 
     OPNCC_VARS:
       domain: ''
@@ -97,7 +97,7 @@
     - name: Pre-Check | Authentication-type set and valid
       ansible.builtin.assert:
         that:
-          - OPNCC_AUTH.type in ['system', 'file', 'ldap', 'oauth2', 'totp']
+          - OPNCC_AUTH.type in ['system', 'ldap', 'oauth2', 'totp']
 
     - name: Pre-Check | Comparing active SSH port with configured one
       ansible.builtin.shell: |
