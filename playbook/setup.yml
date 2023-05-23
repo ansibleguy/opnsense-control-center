@@ -16,20 +16,25 @@
 
     OPNCC_AUTH:  # todo: MFA
       type: 'system'  # system,ldap,oauth2/totp
-      file: '/etc/opn-cc/users.txt'
       system:
         group: 'opncc_users'
       ldap:
         tls: true
         server: ''
         port: 636
-        ca: '/etc/opn-cc/ldap-ca.crt'
-        client_cert: '/etc/opn-cc/ldap-client.crt'
-        client_key: '/etc/opn-cc/ldap-client.key'
+        ca: '/etc/opn-cc/auth/ldap/ca.crt'
+        use_client_cert: false
+        client_cert: '/etc/opn-cc/auth/ldap/client.crt'
+        client_key: '/etc/opn-cc/auth/ldap/client.key'
+        client_key_pwd: ''
+        base_dn: ''
         bind:
-          dn: ''
+          user: ''
           pwd: ''
         filter: ''  # '(&(mail=%s)(objectClass=person)(memberOf:=CN=opncc,OU=Groups,DC=template,DC=ansibleguy,DC=net))'  # login with mail; must be in group 'opncc'
+        ignore_attrs: []  # some LDAP (cloud-)providers may not support all attributes
+        ip_version: 46  # 4, 46, 6, 64 or auto
+        tls_version: 1.2  # 1.0, 1.1, 1.2, auto
       totp:
         path: '/etc/opn-cc/auth/totp/${USER}.key'
 

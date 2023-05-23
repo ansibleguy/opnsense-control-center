@@ -12,7 +12,6 @@ from config import PORT, AUTH_TYPE, LOCATION, ORIGIN_HEADER, MAIL_DOMAIN, \
 from session import has_valid_session, remove_expired_sessions, create_session
 from util import debug
 from type_ldap import auth_ldap
-from type_file import auth_file
 from type_system import auth_system
 from type_totp import auth_totp
 
@@ -20,7 +19,6 @@ app = Flask('OPN-CC-Auth')
 
 AUTH_MAPPING = {
     'system': auth_system,
-    'file': auth_file,
     'ldap': auth_ldap,
     'totp': auth_totp,
 }

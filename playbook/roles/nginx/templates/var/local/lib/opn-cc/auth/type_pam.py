@@ -12,10 +12,9 @@ def auth_pam(user: str, secret: str, pam_module: str) -> bool:
             f"Result: '{pam_check.code}' '{pam_check.reason}' '{pam_result}'"
     )
 
-    if pam_result is False:
-        print(f"AUTH PAM | Module '{pam_module}' | User '{user}' | Authentication failed")
-        return False
-
-    else:
+    if pam_result:
         print(f"AUTH PAM | Module '{pam_module}' | User '{user}' | Authentication successful")
         return True
+
+    print(f"AUTH PAM | Module '{pam_module}' | User '{user}' | Authentication failed")
+    return False

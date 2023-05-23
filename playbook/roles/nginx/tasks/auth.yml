@@ -115,19 +115,25 @@
   ansible.builtin.template:
     src: "templates/etc/pam.d/opncc-auth-totp.j2"
     dest: "/etc/pam.d/{{ OPNCC_NGINX_AUTH.pam_file.totp }}"
-    mode: 0640
+    mode: 0644
     owner: 'root'
     group: 'root'
-  when: OPNCC_AUTH.type == 'totp'
 
 - name: OPN-CC | Nginx | Auth | Adding System-Auth PAM-Module
   ansible.builtin.template:
     src: "templates/etc/pam.d/opncc-auth-system.j2"
     dest: "/etc/pam.d/{{ OPNCC_NGINX_AUTH.pam_file.system }}"
-    mode: 0640
+    mode: 0644
     owner: 'root'
     group: 'root'
-  when: OPNCC_AUTH.type == 'system'
+
+- name: OPN-CC | Nginx | Auth | Adding LDAP config
+  ansible.builtin.copy:
+    content: "{{ OPNCC_AUTH.ldap | to_nice_yaml(indent=2, sort_keys=false) }}"
+    dest: "{{ OPNCC_NGINX_AUTH.ldap_config_file }}"
+    mode: 0600
+    owner: "{{ OPNCC.users.auth }}"
+    group: "{{ OPNCC.users.auth }}"
 
 - name: OPN-CC | Nginx | Auth | Enabling & Starting service
   ansible.builtin.systemd:

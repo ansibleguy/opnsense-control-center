@@ -31,3 +31,5 @@ OPNCC_NGINX_AUTH:
   pam_file:
     system: 'opncc-auth-system'
     totp: 'opncc-auth-totp'
+
+  ldap_config_file: "{{ OPNCC.path.config.auth }}/ldap/config.yaml"
