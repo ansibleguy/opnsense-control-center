@@ -5,6 +5,7 @@ import ssl
 from pathlib import Path
 
 import ldap3
+from ldap3.utils.conv import escape_filter_chars as ldap_escape_filter_chars
 from yaml import safe_load as yaml_safe_load
 
 from config import LDAP_CONFIG_FILE
@@ -95,6 +96,8 @@ def _tls(config: dict) -> ldap3.Tls:
 
 
 def auth_ldap(user: str, secret: str) -> bool:
+    user = ldap_escape_filter_chars(user)
+
     with open(LDAP_CONFIG_FILE, 'r', encoding='utf-8') as config_file:
         config = yaml_safe_load(config_file.read())
 
