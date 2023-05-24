@@ -2,18 +2,22 @@
 # ansibleguy: opnsense-control-center
 
 DEBUG = False
-DEBUG_UNSAFE = False  # log secrets
 
-AUTH_TYPE = '{{ OPNCC_AUTH.type }}'
-SALT = b"{{ lookup('password', OPNCC.path.data.auth + '/salt.txt chars=ascii_letters,digits length=50') }}"
+# system,ldap,totp; totp only valid if 'TOKEN_TYPE' is None
+AUTH_USER_TYPE = '{{ OPNCC_AUTH.type.user }}'
+# if 2FA should be used; totp or None
+AUTH_TOKEN_TYPE = '{{ OPNCC_AUTH.type.token }}'
+ENCRYPTION_KEY = "{{ lookup('password', OPNCC.path.data.auth + '/salt.txt chars=ascii_letters,digits length=75') }}"
 
 PORT = int('{{ OPNCC_VARS.port.auth }}')
 LOCATION = '{{ OPNCC_VARS.url.auth }}'
 ORIGIN_HEADER = 'HTTP_X_AUTH_REQUEST_REDIRECT'
 MAIL_DOMAIN = '{{ OPNCC_VARS.mail_domain | default('') }}'
 
-SESSION_DB = '{{ OPNCC_NGINX_AUTH.session.db }}'
-SESSION_DB_TABLE = '{{ OPNCC_NGINX_AUTH.session.table }}'
+FORM_PARAM_USER = 'u'
+FORM_PARAM_PWD = 'p'
+FORM_PARAM_TOKEN = 't'
+
 SESSION_LIFETIME = int('{{ OPNCC_NGINX_AUTH.session.lifetime_hours }}') * 3600
 COOKIE_SESSION = '{{ OPNCC_NGINX_AUTH.session.cookie.session }}'
 COOKIE_USER = '{{ OPNCC_NGINX_AUTH.session.cookie.user }}'

@@ -63,4 +63,4 @@
     - {p: "{{ OPNCC.path.config.auth }}/ldap", o: "{{ OPNCC.users.auth }}", g: 'root'}
     - {p: "{{ OPNCC.path.data.auth }}", o: "{{ OPNCC.users.auth }}"}
     - {p: "{{ OPNCC.path.data.auth }}/templates", o: 'root', g: "{{ OPNCC.users.auth }}"}
-    - {p: "{{ OPNCC.path.data.auth }}/venv", o: 'root', g: "{{ OPNCC.users.auth }}"}
+    - {p: "{{ OPNCC.path.data.auth }}/venv", o: 'root', g: "{{ OPNCC.users.auth }}", m: '0750'}

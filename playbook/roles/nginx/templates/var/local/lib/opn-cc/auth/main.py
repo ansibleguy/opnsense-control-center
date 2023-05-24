@@ -7,25 +7,33 @@
 from flask import Flask, request, render_template, redirect, Response
 from waitress import serve
 
-from config import PORT, AUTH_TYPE, LOCATION, ORIGIN_HEADER, MAIL_DOMAIN, \
+from config import PORT, AUTH_USER_TYPE, AUTH_TOKEN_TYPE, LOCATION, ORIGIN_HEADER, MAIL_DOMAIN, \
+    FORM_PARAM_USER, FORM_PARAM_PWD, FORM_PARAM_TOKEN, \
     SESSION_LIFETIME, COOKIE_SESSION, COOKIE_USER
-from session import has_valid_session, remove_expired_sessions, create_session
+from session import has_valid_session, create_session_token
 from util import debug
 from type_ldap import auth_ldap
-from type_system import auth_system
-from type_totp import auth_totp
+from type_pam import auth_system, auth_totp
+from type_multi import auth_multi
 
 app = Flask('OPN-CC-Auth')
 
 AUTH_MAPPING = {
-    'system': auth_system,
     'ldap': auth_ldap,
+    'system': auth_system,
     'totp': auth_totp,
 }
 
 
-def _authenticate(user: str, secret: str) -> bool:
-    auth = AUTH_MAPPING[AUTH_TYPE](user=user, secret=secret)
+def _authenticate(user: str, secret_user: str, secret_token: (str, None)) -> bool:
+    if secret_token is None:
+        auth = AUTH_MAPPING[AUTH_USER_TYPE](user=user, secret=secret_user)
+
+    else:
+        auth = auth_multi(
+            user=user, secret_user=secret_user, secret_token=secret_token,
+            user_auth=AUTH_USER_TYPE, token_auth=AUTH_TOKEN_TYPE,
+        )
 
     if auth:
         print(f"INFO: User '{user}' authentication successful.")
@@ -51,17 +59,27 @@ def form():
         return response
 
     debug(loc=f"{LOCATION}/login", msg="RESPONSE | 200 - Rendering template")
-    return render_template('login.html', LOCATION=LOCATION)
+    return render_template(
+        'login.html',
+        LOCATION=LOCATION,
+        FORM_PARAM_PWD=FORM_PARAM_PWD, FORM_PARAM_USER=FORM_PARAM_USER, FORM_PARAM_TOKEN=FORM_PARAM_TOKEN
+    )
 
 
 @app.post(f"/{LOCATION}/login")
 def login():
     debug(loc=f"{LOCATION}/login", msg=f"REQUEST | {request.__dict__}")
-    user, secret = request.form['u'], request.form['p']
+    user = request.form[FORM_PARAM_USER]
+    secret_user = request.form[FORM_PARAM_PWD]
+    secret_token = request.form[FORM_PARAM_TOKEN] if FORM_PARAM_TOKEN in request.form else None
 
-    if _authenticate(user=user, secret=secret):
+    if _authenticate(
+            user=user,
+            secret_user=secret_user,
+            secret_token=secret_token
+    ):
         response = _redirect_origin()
-        token, session_time = create_session(user)
+        token, session_time = create_session_token(user)
         response.set_cookie(
             key=COOKIE_SESSION,
             value=token,
@@ -93,16 +111,6 @@ def auth_request():
 
     debug(loc=LOCATION, msg='RESPONSE | 401')
     return 'unauthorized', 401
-
-
-@app.post(f"/{LOCATION}/cleanup")
-def cleanup():
-    debug(loc=f"{LOCATION}/cleanup", msg=f'REQUEST | {request.__dict__}')
-    print('INFO: Starting session cleanup')
-    remove_expired_sessions()
-    print('INFO: Finished session cleanup')
-    debug(loc=f"{LOCATION}/cleanup", msg='RESPONSE | 200')
-    return 'done', 200
 
 
 @app.route('/<path:path>')

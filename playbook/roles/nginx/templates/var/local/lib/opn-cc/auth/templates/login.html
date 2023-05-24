@@ -1,12 +1,14 @@
 <html>
   <body>
-    <h1>Login form:</h1>
+    <h1>Login:</h1>
     <div>
         <form action="/{{ LOCATION }}/login" method="POST">
-            <label for="u"><b>Username</b></label>
-            <input type="text" placeholder="Enter Username" name="u" required>
-            <label for="p"><b>Password</b></label>
-            <input type="password" placeholder="Enter Password" name="p" required>
+            <label for="{{ FORM_PARAM_USER }}"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="{{ FORM_PARAM_USER }}" required>
+            <label for="{{ FORM_PARAM_PWD }}"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="{{ FORM_PARAM_PWD }}" required>
+            <label for="{{ FORM_PARAM_TOKEN }}"><b>Token</b></label>
+            <input type="text" placeholder="Enter One-Time-Token" name="{{ FORM_PARAM_TOKEN }}">
             <button type="submit">Login</button>
         </form>
     </div>

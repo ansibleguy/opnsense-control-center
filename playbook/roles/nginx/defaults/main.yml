@@ -2,12 +2,16 @@
 
 OPNCC_NGINX_AUTH:
   login_rate_limit:
-    sec: 1
-    min: 10
+    sec: 5
+    min: 30
+
+  pip_requirements: [
+    'flask', 'waitress', 'pycryptodome', 'pyyaml',  # BASIC
+    'ldap3',  # LDAP
+    'python-pam', 'six', 'toml',  # PAM
+  ]
 
   session:
-    db: "{{ OPNCC.path.data.auth }}/sessions.db"
-    table: 'sessions'
     lifetime_hours: 8
     cookie:
       session: 'OPNCC-SESSION'
@@ -16,11 +20,11 @@ OPNCC_NGINX_AUTH:
   config:
     all:
       - 'auth_request_set $user $upstream_http_x_auth_request_user'
-      - 'auth_request_set $email $upstream_http_x_auth_request_email'
-      - 'auth_request_set $auth_cookie $upstream_http_set_cookie'
+      # - 'auth_request_set $email $upstream_http_x_auth_request_email'
+      # - 'auth_request_set $auth_cookie $upstream_http_set_cookie'
       - 'proxy_set_header X-User $user'
-      - 'proxy_set_header X-Email $email'
-      - 'add_header Set-Cookie $auth_cookie'
+      # - 'proxy_set_header X-Email $email'
+      # - 'add_header Set-Cookie $auth_cookie'
     default:
       - 'auth_request /{{ OPNCC_VARS.url.auth }}'
       - 'error_page 401 = /{{ OPNCC_VARS.url.auth }}/login'

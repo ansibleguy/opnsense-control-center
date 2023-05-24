@@ -42,59 +42,46 @@
   loop:
     - 'main.py'
     - 'session.py'
+    - 'crypto.py'
     - 'util.py'
     - 'type_ldap.py'
     - 'type_pam.py'
-    - 'type_totp.py'
-    - 'type_system.py'
+    - 'type_multi.py'
     - 'templates/login.html'
-
-- name: OPN-CC | Nginx | Auth | Installing SQLite3
-  ansible.builtin.apt:
-    name: 'sqlite3'
-    state: present
 
 - name: OPN-CC | Nginx | Auth | Installing python3-virtualenv
   ansible.builtin.pip:
     name: 'virtualenv'
     state: present
 
+- name: OPN-CC | Nginx | Auth | Writing requirements to file
+  ansible.builtin.copy:
+    content: |
+      # ansible_managed
+      # ansibleguy: opnsense-control-center
+      {% for req in OPNCC_NGINX_AUTH.pip_requirements %}
+      {{ req }}
+      {% endfor %}
+    dest: "{{ OPNCC.path.data.auth }}/requirements.txt"
+    owner: 'root'
+    group: "{{ OPNCC.users.auth }}"
+    mode: 0640
+
 - name: OPN-CC | Nginx | Auth | Installing python3 modules into venv
   ansible.builtin.pip:
-    name: ['flask', 'waitress', 'db-sqlite3', 'ldap3', 'python-pam']
+    requirements: "{{ OPNCC.path.data.auth }}/requirements.txt"
     virtualenv: "{{ OPNCC.path.data.auth }}/venv"
     state: present
   notify: Restart-auth
 
-- name: OPN-CC | Nginx | Auth | Session Database (sqlite)
-  ansible.builtin.command: "sqlite3 -line {{ OPNCC_NGINX_AUTH.session.db }}
-  'CREATE TABLE {{ OPNCC_NGINX_AUTH.session.table }} (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  time REAL,
-  user TEXT,
-  token TEXT
-  );'"
-  args:
-    creates: "{{ OPNCC_NGINX_AUTH.session.db }}"
-
-- name: OPN-CC | Nginx | Auth | Session Database privileges
+- name: OPN-CC | Nginx | Auth | Setting privileges on virutalenv
   ansible.builtin.file:
-    state: touch
-    access_time: preserve
-    modification_time: preserve
-    path: "{{ OPNCC_NGINX_AUTH.session.db }}"
-    mode: 0640
-    owner: "{{ OPNCC.users.auth }}"
+    path: "{{ OPNCC.path.data.auth }}/venv"
+    state: directory
+    mode: 0750
+    recurse: true
+    owner: 'root'
     group: "{{ OPNCC.users.auth }}"
-
-- name: OPN-CC | Nginx | Auth | Cron for session-cleanup
-  ansible.builtin.cron:
-    cron_file: 'opncc'
-    name: 'OPNCC-AUTH Session Cleanup'
-    minute: 0
-    hour: '*'
-    user: "{{ OPNCC.users.auth }}"
-    job: "curl -i -XPOST http://127.0.0.1:{{ OPNCC_VARS.port.auth }}/{{ OPNCC_VARS.url.auth }}/cleanup"
 
 - name: OPN-CC | Nginx | Auth | Authentication service
   ansible.builtin.template:
@@ -109,7 +96,40 @@
   ansible.builtin.apt:
     name: ['libpam-google-authenticator', 'qrencode']
     state: present
-  when: OPNCC_AUTH.type == 'totp'  # todo: MFA
+  when: OPNCC_AUTH.type.user == 'totp' or OPNCC_AUTH.type.token == 'totp'
+  notify: Restart-auth
+
+- name: OPN-CC | Nginx | Auth | Allowing service-user to authenticate system users
+  ansible.builtin.user:
+    name: "{{ OPNCC.users.auth }}"
+    groups: 'shadow'
+    append: true
+  when: OPNCC_AUTH.type.user == 'system'
+  notify: Restart-auth
+
+# NOTE: we can't use 'setcap' on a link
+# todo: but this also means the python-version won't be auto-updated
+- name: OPN-CC | Nginx | Auth | Change virutalenv python to be standalone binary
+  ansible.builtin.copy:
+    src: '/usr/bin/python3'
+    remote_src: true
+    dest: "{{ OPNCC.path.data.auth }}/venv/bin/python"
+    owner: 'root'
+    group: "{{ OPNCC.users.auth }}"
+    mode: 0750
+  when: OPNCC_AUTH.type.user == 'totp' or OPNCC_AUTH.type.token == 'totp'
+  notify: Restart-auth
+
+# NOTE: to fix 'libpam-google-authenticator' errors:
+#  'Failed to change group id for user ...'
+#  'Failed to change user id to ...' (would be 'cap_setuid')
+- name: OPN-CC | Nginx | Auth | Allowing service-user privileges for TOTP authentication
+  community.general.capabilities:
+    path: "{{ OPNCC.path.data.auth }}/venv/bin/python"
+    capability: 'cap_setgid+eip'
+    state: present
+  when: OPNCC_AUTH.type.user == 'totp' or OPNCC_AUTH.type.token == 'totp'
+  notify: Restart-auth
 
 - name: OPN-CC | Nginx | Auth | Adding TOTP PAM-Module
   ansible.builtin.template:

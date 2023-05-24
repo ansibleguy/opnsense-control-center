@@ -3,12 +3,12 @@
 
 [Unit]
 Description=OPNSense Control Center - Authentication Service
-ConditionPathExists={{ OPNCC_NGINX_AUTH.session.db }}
 
 [Service]
 Type=simple
 User={{ OPNCC.users.auth }}
 Group={{ OPNCC.users.auth }}
+ExecStartPre=/bin/bash -c 'source {{ OPNCC.path.data.auth }}/venv/bin/activate && pip install --upgrade -r "{{ OPNCC.path.data.auth }}/requirements.txt"'
 ExecStart=/bin/bash -c 'source {{ OPNCC.path.data.auth }}/venv/bin/activate && python3 {{ OPNCC.path.data.auth }}/main.py'
 WorkingDirectory={{ OPNCC.path.data.auth }}
 Environment=PYTHONPATH={{ OPNCC.path.data.auth }}
