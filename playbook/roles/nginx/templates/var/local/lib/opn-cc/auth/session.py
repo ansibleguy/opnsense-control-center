@@ -37,7 +37,7 @@ def has_valid_session() -> bool:
             lifetime_valid = (float(token_session_time) + SESSION_LIFETIME) > time()
             debug(
                 f"Session token: user matches - {user == token_user} | "
-                f"lifetime valid - {token_user}"
+                f"lifetime valid - {lifetime_valid}"
             )
             if user == token_user and lifetime_valid:
                 return True

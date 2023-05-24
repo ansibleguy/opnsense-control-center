@@ -26,7 +26,7 @@ AUTH_MAPPING = {
 
 
 def _authenticate(user: str, secret_user: str, secret_token: (str, None)) -> bool:
-    if secret_token is None:
+    if secret_token is None or AUTH_TOKEN_TYPE in [None, '', ' ']:
         auth = AUTH_MAPPING[AUTH_USER_TYPE](user=user, secret=secret_user)
 
     else:
@@ -61,7 +61,7 @@ def form():
     debug(loc=f"{LOCATION}/login", msg="RESPONSE | 200 - Rendering template")
     return render_template(
         'login.html',
-        LOCATION=LOCATION,
+        LOCATION=LOCATION, HOST=request.headers['HOST'],
         FORM_PARAM_PWD=FORM_PARAM_PWD, FORM_PARAM_USER=FORM_PARAM_USER, FORM_PARAM_TOKEN=FORM_PARAM_TOKEN
     )
 
